@@ -3,7 +3,7 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, collection, doc, addDoc, getDoc, setDoc, deleteDoc, onSnapshot, query, serverTimestamp, updateDoc, arrayUnion, arrayRemove, writeBatch } from 'firebase/firestore';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Sankey } from 'recharts';
-// import Papa from 'papaparse'; // This is now loaded dynamically
+// PapaParse is now loaded dynamically via a script tag
 
 // --- IMPORTANT: REPLACE THIS with the firebaseConfig object from your own Firebase project settings. ---
 const firebaseConfig = {
@@ -150,8 +150,8 @@ export default function App() {
 
         data.forEach(item => {
             const newAppRef = doc(collection(db, appsPath));
-            const deadline = item.deadline ? new Date(item.deadline).toISOString() : '';
-            batch.set(newAppRef, { ...item, deadline, tasks: [] });
+            // The deadline is now pre-formatted by the importer
+            batch.set(newAppRef, { ...item, tasks: [] });
         });
 
         try {
@@ -467,44 +467,53 @@ const ConfirmDeleteModal = ({ onConfirm, onCancel }) => {
 };
 
 const ImportModal = ({ onImport, onClose }) => {
-    const [file, setFile] = useState(null);
     const [data, setData] = useState([]);
     const [error, setError] = useState('');
 
     const handleFileChange = (e) => {
         const selectedFile = e.target.files[0];
+        if (!window.Papa) {
+            setError("Parsing library not loaded. Please wait a moment and try again.");
+            return;
+        }
         if (selectedFile && selectedFile.type === 'text/csv') {
-            setFile(selectedFile);
             setError('');
-            // Use window.Papa which was loaded dynamically
             window.Papa.parse(selectedFile, {
                 header: true,
                 skipEmptyLines: true,
                 complete: (results) => {
-                    const mappedData = results.data.map(row => ({
-                        company: row['Company'] || '',
-                        title: row['Title'] || '',
-                        status: row['Status'] || 'Pending',
-                        deadline: row['Application Date'] || '',
-                        jobLink: row['Job Posting Link'] || '',
-                        contactName: row['Contact'] || '',
-                        notes: row['Notes'] || '',
-                        salary: row['Salary (est/posted)'] || '',
-                        source: 'CSV Import'
-                    }));
+                    if (results.errors.length > 0) {
+                        setError("Error parsing CSV file. Please check the file format.");
+                        return;
+                    }
+                    const mappedData = results.data.map(row => {
+                        const dateString = row['Application Date'];
+                        let formattedDate = '';
+                        if (dateString) {
+                            const parts = dateString.split('/');
+                            if (parts.length === 3) {
+                                // Convert D/M/YYYY or DD/MM/YYYY to MM/DD/YYYY for robust parsing
+                                formattedDate = `${parts[1]}/${parts[0]}/${parts[2]}`;
+                            }
+                        }
+                        return {
+                            company: row['Company'] || '',
+                            title: row['Title'] || '',
+                            status: row['Status'] || 'Pending',
+                            deadline: formattedDate ? new Date(formattedDate).toISOString() : '',
+                            jobLink: '', // Leave blank as it's not a URL in the sheet
+                            contactName: row['Contact'] || '',
+                            notes: row['Notes'] || '',
+                            salary: row['Salary (est/posted)'] || '',
+                            source: row['Job Posting Link'] || 'CSV Import' // Use this column for source
+                        };
+                    });
                     setData(mappedData);
                 }
             });
         } else {
             setError('Please select a valid .csv file.');
-            setFile(null);
             setData([]);
-        }
-    };
-
-    const handleImportClick = () => {
-        if (data.length > 0) {
-            onImport(data);
         }
     };
 
@@ -526,7 +535,7 @@ const ImportModal = ({ onImport, onClose }) => {
                 </div>
                 <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
                     <button onClick={onClose} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancel</button>
-                    <button onClick={handleImportClick} disabled={data.length === 0} className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400">Import Applications</button>
+                    <button onClick={() => onImport(data)} disabled={data.length === 0} className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400">Import Applications</button>
                 </div>
             </div>
         </div>
