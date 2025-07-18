@@ -5,8 +5,6 @@ import { getFirestore, collection, doc, addDoc, getDoc, setDoc, deleteDoc, onSna
 import { setLogLevel } from 'firebase/firestore';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Sankey } from 'recharts';
 
-
-// --- Helper Functions & Constants ---
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
@@ -28,7 +26,7 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+const appId = 'default-app-id'; // This can remain as is
 
 // --- Icon Components ---
 const PlusIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>);
@@ -60,7 +58,7 @@ export default function App() {
 
     useEffect(() => {
         try {
-            if (Object.keys(firebaseConfig).length > 0) {
+            if (Object.keys(firebaseConfig).length > 0 && firebaseConfig.apiKey !== "YOUR_API_KEY") {
                 const app = initializeApp(firebaseConfig);
                 const authInstance = getAuth(app);
                 const dbInstance = getFirestore(app);
@@ -71,7 +69,7 @@ export default function App() {
                     else signInAnonymously(authInstance).catch(err => setError("Sign-in failed: " + err.message));
                     setIsAuthReady(true);
                 });
-            } else { setIsLoading(false); setError("Firebase config missing."); }
+            } else { setIsLoading(false); setError("Firebase config missing or invalid. Please update it in src/App.js."); }
         } catch (e) { setIsLoading(false); setError("DB connection failed: " + e.message); }
     }, []);
 
