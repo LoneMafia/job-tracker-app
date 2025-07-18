@@ -38,6 +38,7 @@ const UploadIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5
 
 const ApplicationList = ({ applications, isLoading, onSelectApp, onEdit, onDelete }) => {
     if (isLoading) return <p className="text-center py-8">Loading applications...</p>;
+    
     const upcomingDeadlines = applications.filter(app => {
         if (!app.deadline || app.status !== 'Pending') return false;
         const deadlineDate = new Date(app.deadline);
@@ -45,6 +46,9 @@ const ApplicationList = ({ applications, isLoading, onSelectApp, onEdit, onDelet
         const twoDaysFromNow = new Date(now.getTime() + 48 * 60 * 60 * 1000);
         return deadlineDate > now && deadlineDate <= twoDaysFromNow;
     });
+
+    const totalApps = applications.length;
+
     return (
         <>
             {upcomingDeadlines.length > 0 && (
@@ -56,11 +60,21 @@ const ApplicationList = ({ applications, isLoading, onSelectApp, onEdit, onDelet
             <div className="bg-white shadow-lg rounded-xl overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50"><tr><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deadline</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th></tr></thead>
+                        <thead className="bg-gray-50">
+                            <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deadline</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {applications.length === 0 ? (<tr><td colSpan="5" className="text-center py-12"><div className="text-lg font-medium text-gray-600">No applications yet!</div></td></tr>) : (
-                                applications.map(app => (
+                            {applications.length === 0 ? (<tr><td colSpan="6" className="text-center py-12"><div className="text-lg font-medium text-gray-600">No applications yet!</div></td></tr>) : (
+                                applications.map((app, index) => (
                                     <tr key={app.id} className="hover:bg-gray-50 transition-colors">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">{totalApps - index}</td>
                                         <td onClick={() => onSelectApp(app.id)} className="px-6 py-4 whitespace-nowrap cursor-pointer"><div className="text-sm font-medium text-gray-900">{app.company}</div><div className="text-sm text-gray-500">{app.source}</div></td>
                                         <td onClick={() => onSelectApp(app.id)} className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 cursor-pointer">{app.title}</td>
                                         <td onClick={() => onSelectApp(app.id)} className="px-6 py-4 whitespace-nowrap cursor-pointer"><span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${app.status === 'Applied' ? 'bg-blue-100 text-blue-800' : app.status.includes('Test') || app.status.includes('FGD') || app.status.includes('Interviewing') ? 'bg-green-100 text-green-800' : app.status === 'Offer' ? 'bg-purple-100 text-purple-800' : app.status === 'Rejected' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}`}>{app.status}</span></td>
@@ -479,7 +493,8 @@ export default function App() {
         const qApps = query(collection(db, appsPath));
         const unsubApps = onSnapshot(qApps, snap => {
             const appsData = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            appsData.sort((a, b) => (new Date(b.deadline) || 0) - (new Date(a.deadline) || 0));
+            // Sort by creation date, newest first
+            appsData.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
             setApplications(appsData);
             if (view !== 'detail') setIsLoading(false);
         }, err => { setError("Fetch failed."); setIsLoading(false); });
@@ -504,12 +519,15 @@ export default function App() {
                 const docRef = doc(db, appsPath, editingApplication.id);
                 const oldStatus = (await getDoc(docRef)).data()?.status;
                 dataToSave.tasks = editingApplication.tasks || [];
+                // Don't overwrite createdAt on edit
+                dataToSave.createdAt = editingApplication.createdAt || serverTimestamp();
                 await setDoc(docRef, dataToSave);
                 if (oldStatus && oldStatus !== appData.status) {
                     await addDoc(collection(db, historyPath), { fromStatus: oldStatus, toStatus: appData.status, timestamp: serverTimestamp() });
                 }
             } else {
                 dataToSave.tasks = [];
+                dataToSave.createdAt = serverTimestamp();
                 await addDoc(collection(db, appsPath), dataToSave);
                 await addDoc(collection(db, historyPath), { fromStatus: 'Created', toStatus: appData.status, timestamp: serverTimestamp() });
             }
@@ -539,7 +557,7 @@ export default function App() {
 
         data.forEach(item => {
             const newAppRef = doc(collection(db, appsPath));
-            batch.set(newAppRef, { ...item, tasks: [] });
+            batch.set(newAppRef, { ...item, tasks: [], createdAt: serverTimestamp() });
             // Create initial history event for Sankey diagram
             const newHistoryRef = doc(collection(db, historyPath));
             batch.set(newHistoryRef, { fromStatus: 'Imported', toStatus: item.status, timestamp: serverTimestamp() });
