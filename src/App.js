@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile } from 'firebase/auth';
 import { getFirestore, collection, doc, addDoc, getDoc, setDoc, deleteDoc, onSnapshot, query, serverTimestamp, updateDoc, arrayUnion, arrayRemove, writeBatch } from 'firebase/firestore';
+// Note: Firebase Storage is no longer needed for this approach
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Sankey } from 'recharts';
 // PapaParse is now loaded dynamically via a script tag
 
@@ -607,7 +608,7 @@ const Settings = ({ db, userId, userSettings, setUserSettings }) => {
 // --- FILE: src/components/Sidebar.js ---
 // ====================================================================================
 
-const Sidebar = ({ user, view, setView, onSignOut, onOpenProfile }) => {
+const Sidebar = ({ user, userSettings, view, setView, onSignOut, onOpenProfile }) => {
     const getInitials = (name) => {
         if (!name) return '?';
         const names = name.split(' ');
@@ -621,9 +622,13 @@ const Sidebar = ({ user, view, setView, onSignOut, onOpenProfile }) => {
         <div className="hidden lg:flex flex-col w-64 bg-white dark:bg-gray-800 border-r dark:border-gray-700 shadow-lg">
             <div className="flex flex-col p-4 border-b dark:border-gray-700">
                 <div className="flex items-center space-x-3 mb-3">
-                    <div className="h-12 w-12 flex-shrink-0 rounded-full bg-blue-600 text-white flex items-center justify-center text-xl font-bold">
-                        {getInitials(user.displayName)}
-                    </div>
+                    {userSettings.photoURL ? (
+                        <img src={userSettings.photoURL} alt="Profile" className="h-12 w-12 rounded-full object-cover" />
+                    ) : (
+                        <div className="h-12 w-12 flex-shrink-0 rounded-full bg-blue-600 text-white flex items-center justify-center text-xl font-bold">
+                            {getInitials(user.displayName)}
+                        </div>
+                    )}
                     <div>
                         <p className="font-semibold text-gray-800 dark:text-white truncate">{user.displayName || 'New User'}</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
@@ -650,8 +655,27 @@ const Sidebar = ({ user, view, setView, onSignOut, onOpenProfile }) => {
 // --- FILE: src/components/ProfileModal.js ---
 // ====================================================================================
 
-const ProfileModal = ({ user, auth, onClose, setError }) => {
+const ProfileModal = ({ user, auth, db, userId, userSettings, onClose, setError }) => {
     const [name, setName] = useState(user.displayName || '');
+    const [photoFile, setPhotoFile] = useState(null);
+    const [photoPreview, setPhotoPreview] = useState(userSettings.photoURL);
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file && file.size > 1024 * 1024) { // 1MB limit
+            setError("Image file is too large. Please choose a file smaller than 1MB.");
+            return;
+        }
+        if (file) {
+            setPhotoFile(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setPhotoPreview(reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     const handleSave = async (e) => {
         e.preventDefault();
@@ -659,11 +683,34 @@ const ProfileModal = ({ user, auth, onClose, setError }) => {
             setError("Name cannot be empty.");
             return;
         }
+        setIsSaving(true);
+        setError('');
+
         try {
-            await updateProfile(auth.currentUser, { displayName: name.trim() });
+            let photoBase64 = userSettings.photoURL;
+            if (photoFile) {
+                photoBase64 = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(photoFile);
+                });
+            }
+            
+            // Update Auth profile (name only)
+            if (user.displayName !== name.trim()) {
+                await updateProfile(auth.currentUser, { displayName: name.trim() });
+            }
+
+            // Update Firestore settings document (name and photo)
+            const settingsRef = doc(db, `artifacts/${appId}/users/${userId}/settings/user`);
+            await setDoc(settingsRef, { ...userSettings, photoURL: photoBase64 }, { merge: true });
+
             onClose();
         } catch (err) {
             setError("Failed to update profile: " + err.message);
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -673,17 +720,26 @@ const ProfileModal = ({ user, auth, onClose, setError }) => {
                 <form onSubmit={handleSave}>
                     <div className="p-6">
                         <h3 className="text-lg font-bold mb-4 dark:text-white">Edit Profile</h3>
+                        <div className="flex items-center space-x-4 mb-4">
+                            <img src={photoPreview || `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'A')}&background=random`} alt="Profile Preview" className="h-20 w-20 rounded-full object-cover" />
+                            <div>
+                                <label htmlFor="photoUpload" className="cursor-pointer text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">Change Photo</label>
+                                <input id="photoUpload" name="photoUpload" type="file" accept="image/*" onChange={handleFileChange} className="hidden"/>
+                                <p className="text-xs text-gray-400 mt-1">Max file size: 1MB</p>
+                            </div>
+                        </div>
                         <div>
                             <label htmlFor="profileName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
                             <div className="mt-1">
                                 <input id="profileName" name="profileName" type="text" required value={name} onChange={(e) => setName(e.target.value)} className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"/>
                             </div>
                         </div>
-                        <p className="text-xs text-gray-400 mt-2">Profile picture uploads are coming soon!</p>
                     </div>
                     <div className="bg-gray-50 dark:bg-gray-900 px-6 py-4 flex justify-end space-x-3">
                         <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">Cancel</button>
-                        <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save Changes</button>
+                        <button type="submit" disabled={isSaving} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-300">
+                            {isSaving ? 'Saving...' : 'Save Changes'}
+                        </button>
                     </div>
                 </form>
             </div>
@@ -699,7 +755,7 @@ export default function App() {
     const [db, setDb] = useState(null);
     const [auth, setAuth] = useState(null);
     const [user, setUser] = useState(null);
-    const [userSettings, setUserSettings] = useState({ theme: 'light', customSources: [] });
+    const [userSettings, setUserSettings] = useState({ theme: 'light', customSources: [], photoURL: '' });
     const [isAuthReady, setIsAuthReady] = useState(false);
     const [applications, setApplications] = useState([]);
     const [statusHistory, setStatusHistory] = useState([]);
@@ -792,7 +848,7 @@ export default function App() {
                 setUserSettings(doc.data());
             } else {
                 // Create default settings for new user
-                setDoc(doc(db, settingsPath), { theme: 'light', customSources: [] });
+                setDoc(doc(db, settingsPath), { theme: 'light', customSources: [], photoURL: '' });
             }
         });
 
@@ -888,7 +944,7 @@ export default function App() {
 
     return (
         <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900 font-sans text-gray-800 dark:text-gray-200">
-            <Sidebar user={user} view={view} setView={handleSetView} onSignOut={handleSignOut} onOpenProfile={() => setIsProfileModalOpen(true)} />
+            <Sidebar user={user} userSettings={userSettings} view={view} setView={handleSetView} onSignOut={handleSignOut} onOpenProfile={() => setIsProfileModalOpen(true)} />
             <div className="flex-1 flex flex-col">
                 <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-10 lg:hidden">
                     {/* Mobile Header */}
@@ -921,7 +977,7 @@ export default function App() {
             {isModalOpen && <ApplicationForm application={editingApplication} onSave={handleSaveApplication} onClose={closeModal} customSources={userSettings.customSources} />}
             {isImportModalOpen && <ImportModal onImport={handleBulkImport} onClose={() => setIsImportModalOpen(false)} />}
             {showDeleteConfirm && <ConfirmDeleteModal onConfirm={confirmDelete} onCancel={() => setShowDeleteConfirm(false)} />}
-            {isProfileModalOpen && <ProfileModal user={user} auth={auth} onClose={() => setIsProfileModalOpen(false)} setError={setError} />}
+            {isProfileModalOpen && <ProfileModal user={user} auth={auth} db={db} userId={user.uid} userSettings={userSettings} onClose={() => setIsProfileModalOpen(false)} setError={setError} />}
         </div>
     );
 }
