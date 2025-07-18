@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile } from 'firebase/auth';
 import { getFirestore, collection, doc, addDoc, getDoc, setDoc, deleteDoc, onSnapshot, query, serverTimestamp, updateDoc, arrayUnion, arrayRemove, writeBatch } from 'firebase/firestore';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Sankey } from 'recharts';
 // PapaParse is now loaded dynamically via a script tag
@@ -32,6 +32,7 @@ const CalendarIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h
 const SparklesIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m1-12a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1h-6a1 1 0 01-1-1V6zM17.66 17.66l-1.42-1.42m1.42 0l-1.42 1.42m0-1.42l1.42 1.42m1.42-1.42l-1.42-1.42" /></svg>);
 const UploadIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>);
 const LogoutIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>);
+const SettingsIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>);
 
 // ====================================================================================
 // --- FILE: src/components/ApplicationList.js ---
@@ -58,29 +59,29 @@ const ApplicationList = ({ applications, isLoading, onSelectApp, onEdit, onDelet
                     <ul className="mt-2 list-disc list-inside">{upcomingDeadlines.map(app => <li key={app.id} className="mt-1"><span className="font-bold">{app.company} - {app.title}</span>: <span className="ml-2">{new Date(app.deadline).toLocaleString()}</span></li>)}</ul>
                 </div>
             )}
-            <div className="bg-white shadow-lg rounded-xl overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 shadow-lg rounded-xl overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead className="bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deadline</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">#</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Company</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Title</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Deadline</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {applications.length === 0 ? (<tr><td colSpan="6" className="text-center py-12"><div className="text-lg font-medium text-gray-600">No applications yet!</div></td></tr>) : (
+                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            {applications.length === 0 ? (<tr><td colSpan="6" className="text-center py-12"><div className="text-lg font-medium text-gray-600 dark:text-gray-400">No applications yet!</div></td></tr>) : (
                                 applications.map((app, index) => (
-                                    <tr key={app.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">{totalApps - index}</td>
-                                        <td onClick={() => onSelectApp(app.id)} className="px-6 py-4 whitespace-nowrap cursor-pointer"><div className="text-sm font-medium text-gray-900">{app.company}</div><div className="text-sm text-gray-500">{app.source}</div></td>
-                                        <td onClick={() => onSelectApp(app.id)} className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 cursor-pointer">{app.title}</td>
+                                    <tr key={app.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-400">{totalApps - index}</td>
+                                        <td onClick={() => onSelectApp(app.id)} className="px-6 py-4 whitespace-nowrap cursor-pointer"><div className="text-sm font-medium text-gray-900 dark:text-white">{app.company}</div><div className="text-sm text-gray-500 dark:text-gray-400">{app.source}</div></td>
+                                        <td onClick={() => onSelectApp(app.id)} className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-300 cursor-pointer">{app.title}</td>
                                         <td onClick={() => onSelectApp(app.id)} className="px-6 py-4 whitespace-nowrap cursor-pointer"><span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${app.status === 'Applied' ? 'bg-blue-100 text-blue-800' : app.status.includes('Test') || app.status.includes('FGD') || app.status.includes('Interviewing') ? 'bg-green-100 text-green-800' : app.status === 'Offer' ? 'bg-purple-100 text-purple-800' : app.status === 'Rejected' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}`}>{app.status}</span></td>
-                                        <td onClick={() => onSelectApp(app.id)} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 cursor-pointer">{app.deadline ? new Date(app.deadline).toLocaleDateString() : 'N/A'}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium"><div className="flex items-center space-x-4"><button onClick={() => onEdit(app)} className="text-indigo-600 hover:text-indigo-900"><EditIcon /></button><button onClick={() => onDelete(app.id)} className="text-red-600 hover:text-red-900"><DeleteIcon /></button></div></td>
+                                        <td onClick={() => onSelectApp(app.id)} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 cursor-pointer">{app.deadline ? new Date(app.deadline).toLocaleDateString() : 'N/A'}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium"><div className="flex items-center space-x-4"><button onClick={() => onEdit(app)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"><EditIcon /></button><button onClick={() => onDelete(app.id)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"><DeleteIcon /></button></div></td>
                                     </tr>
                                 ))
                             )}
@@ -131,35 +132,35 @@ const ApplicationDetail = ({ appId, db, userId, setView, onEdit, onDelete }) => 
     if (!app) return null;
 
     return (
-        <div className="bg-white shadow-lg rounded-xl overflow-hidden">
-            <div className="p-6 border-b flex justify-between items-start">
+        <div className="bg-white dark:bg-gray-800 shadow-lg rounded-xl overflow-hidden">
+            <div className="p-6 border-b dark:border-gray-700 flex justify-between items-start">
                 <div>
-                    <button onClick={() => setView('list')} className="flex items-center text-sm text-blue-600 hover:underline mb-4"><BackIcon /> Back to List</button>
-                    <h2 className="text-2xl font-bold text-gray-900">{app.company} - <span className="font-normal">{app.title}</span></h2>
-                    <p className="text-gray-600 mt-1">Status: {app.status}</p>
+                    <button onClick={() => setView('list')} className="flex items-center text-sm text-blue-600 dark:text-blue-400 hover:underline mb-4"><BackIcon /> Back to List</button>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{app.company} - <span className="font-normal">{app.title}</span></h2>
+                    <p className="text-gray-600 dark:text-gray-400 mt-1">Status: {app.status}</p>
                 </div>
                 <div className="flex space-x-2">
-                    <button onClick={() => onEdit(app)} className="p-2 text-gray-500 hover:text-blue-600"><EditIcon /></button>
-                    <button onClick={() => onDelete(app.id)} className="p-2 text-gray-500 hover:text-red-600"><DeleteIcon /></button>
+                    <button onClick={() => onEdit(app)} className="p-2 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400"><EditIcon /></button>
+                    <button onClick={() => onDelete(app.id)} className="p-2 text-gray-500 hover:text-red-600 dark:hover:text-red-400"><DeleteIcon /></button>
                 </div>
             </div>
             <div className="p-6">
-                <div className="flex border-b mb-4">
-                    <button onClick={() => setDetailView('info')} className={`py-2 px-4 font-medium ${detailView === 'info' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}>Details</button>
-                    <button onClick={() => setDetailView('tasks')} className={`py-2 px-4 font-medium ${detailView === 'tasks' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}>Tasks ({app.tasks?.length || 0})</button>
-                    <button onClick={() => setDetailView('ai')} className={`flex items-center py-2 px-4 font-medium ${detailView === 'ai' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}><SparklesIcon/> AI Assistant</button>
+                <div className="flex border-b dark:border-gray-700 mb-4">
+                    <button onClick={() => setDetailView('info')} className={`py-2 px-4 font-medium ${detailView === 'info' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`}>Details</button>
+                    <button onClick={() => setDetailView('tasks')} className={`py-2 px-4 font-medium ${detailView === 'tasks' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`}>Tasks ({app.tasks?.length || 0})</button>
+                    <button onClick={() => setDetailView('ai')} className={`flex items-center py-2 px-4 font-medium ${detailView === 'ai' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`}><SparklesIcon/> AI Assistant</button>
                 </div>
 
                 {detailView === 'info' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
-                        <div><strong>Deadline:</strong> {app.deadline ? new Date(app.deadline).toLocaleDateString() : 'N/A'}</div>
-                        <div><strong>Follow-up On:</strong> {app.followUpDate ? new Date(app.followUpDate).toLocaleDateString() : 'N/A'}</div>
-                        <div><strong>Source:</strong> {app.source}</div>
-                        <div><strong>Salary:</strong> {app.salary || 'N/A'}</div>
-                        <div className="col-span-1 md:col-span-2"><strong>Job Link:</strong> <a href={app.jobLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{app.jobLink}</a></div>
-                        <div className="col-span-1 md:col-span-2"><strong>Contact:</strong> {app.contactName || 'N/A'} ({app.contactEmail || 'N/A'})</div>
-                        <div className="col-span-1 md:col-span-2"><strong>Notes:</strong><p className="whitespace-pre-wrap mt-1 p-2 bg-gray-50 rounded">{app.notes || 'None'}</p></div>
-                        <div className="col-span-1 md:col-span-2"><strong>Job Description:</strong><p className="whitespace-pre-wrap mt-1 p-2 bg-gray-50 rounded h-40 overflow-y-auto">{app.jobDescription || 'None'}</p></div>
+                        <div className="dark:text-gray-300"><strong>Deadline:</strong> {app.deadline ? new Date(app.deadline).toLocaleDateString() : 'N/A'}</div>
+                        <div className="dark:text-gray-300"><strong>Follow-up On:</strong> {app.followUpDate ? new Date(app.followUpDate).toLocaleDateString() : 'N/A'}</div>
+                        <div className="dark:text-gray-300"><strong>Source:</strong> {app.source}</div>
+                        <div className="dark:text-gray-300"><strong>Salary:</strong> {app.salary || 'N/A'}</div>
+                        <div className="col-span-1 md:col-span-2 dark:text-gray-300"><strong>Job Link:</strong> <a href={app.jobLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">{app.jobLink}</a></div>
+                        <div className="col-span-1 md:col-span-2 dark:text-gray-300"><strong>Contact:</strong> {app.contactName || 'N/A'} ({app.contactEmail || 'N/A'})</div>
+                        <div className="col-span-1 md:col-span-2 dark:text-gray-300"><strong>Notes:</strong><p className="whitespace-pre-wrap mt-1 p-2 bg-gray-50 dark:bg-gray-700 rounded">{app.notes || 'None'}</p></div>
+                        <div className="col-span-1 md:col-span-2 dark:text-gray-300"><strong>Job Description:</strong><p className="whitespace-pre-wrap mt-1 p-2 bg-gray-50 dark:bg-gray-700 rounded h-40 overflow-y-auto">{app.jobDescription || 'None'}</p></div>
                         <div className="col-span-1 md:col-span-2 pt-4">
                             <button onClick={handleAddToCalendar} className="flex items-center bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow transition-colors"><CalendarIcon/> Add Deadline to Calendar</button>
                         </div>
@@ -184,10 +185,10 @@ const TasksManager = ({ app, db, userId }) => {
     const handleDeleteTask = async (task) => { await updateDoc(docRef, { tasks: arrayRemove(task) }); };
     return (
         <div>
-            <form onSubmit={handleAddTask} className="flex space-x-2 mb-4"><input type="text" value={newTaskText} onChange={e => setNewTaskText(e.target.value)} placeholder="Add a new task..." className="flex-grow border-gray-300 rounded-md shadow-sm sm:text-sm"/><button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Add</button></form>
+            <form onSubmit={handleAddTask} className="flex space-x-2 mb-4"><input type="text" value={newTaskText} onChange={e => setNewTaskText(e.target.value)} placeholder="Add a new task..." className="flex-grow border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm sm:text-sm"/><button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Add</button></form>
             <ul className="space-y-2">
-                {app.tasks && app.tasks.sort((a,b) => a.completed - b.completed).map(task => (<li key={task.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-md"><div className="flex items-center"><input type="checkbox" checked={task.completed} onChange={() => handleToggleTask(task)} className="h-4 w-4 text-blue-600 border-gray-300 rounded mr-3"/><span className={task.completed ? 'line-through text-gray-500' : ''}>{task.text}</span></div><button onClick={() => handleDeleteTask(task)} className="text-red-500 hover:text-red-700 p-1"><DeleteIcon/></button></li>))}
-                {(!app.tasks || app.tasks.length === 0) && <p className="text-gray-500">No tasks yet.</p>}
+                {app.tasks && app.tasks.sort((a,b) => a.completed - b.completed).map(task => (<li key={task.id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-md"><div className="flex items-center"><input type="checkbox" checked={task.completed} onChange={() => handleToggleTask(task)} className="h-4 w-4 text-blue-600 border-gray-300 rounded mr-3"/><span className={task.completed ? 'line-through text-gray-500 dark:text-gray-400' : 'dark:text-gray-200'}>{task.text}</span></div><button onClick={() => handleDeleteTask(task)} className="text-red-500 hover:text-red-700 p-1"><DeleteIcon/></button></li>))}
+                {(!app.tasks || app.tasks.length === 0) && <p className="text-gray-500 dark:text-gray-400">No tasks yet.</p>}
             </ul>
         </div>
     );
@@ -244,15 +245,15 @@ const AIAssistant = ({ app }) => {
         callGeminiAPI(prompt, 'email');
     };
 
-    const renderResult = (text) => <p className="whitespace-pre-wrap p-4 bg-gray-50 rounded-md text-sm">{text}</p>;
+    const renderResult = (text) => <p className="whitespace-pre-wrap p-4 bg-gray-50 dark:bg-gray-700 rounded-md text-sm">{text}</p>;
 
     return (
         <div className="space-y-6">
             {error && <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md" role="alert"><p>{error}</p></div>}
             
-            <div className="p-4 border rounded-lg"><h3 className="font-bold text-lg mb-2">Resume Matcher</h3><p className="text-sm text-gray-600 mb-4">Analyze your resume against the job description. Ensure you have saved your master resume in the application form.</p><button onClick={handleAnalyzeMatch} disabled={isLoading.match} className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 disabled:bg-indigo-300">{isLoading.match ? 'Analyzing...' : 'Analyze Match'}</button>{result.match && <div className="mt-4">{renderResult(result.match)}</div>}</div>
-            <div className="p-4 border rounded-lg"><h3 className="font-bold text-lg mb-2">Interview Prep</h3><p className="text-sm text-gray-600 mb-4">Generate potential interview questions based on the job details.</p><button onClick={handleGenerateQuestions} disabled={isLoading.questions} className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 disabled:bg-indigo-300">{isLoading.questions ? 'Generating...' : 'Generate Questions'}</button>{result.questions && <div className="mt-4">{renderResult(result.questions)}</div>}</div>
-            <div className="p-4 border rounded-lg"><h3 className="font-bold text-lg mb-2">Communication Helper</h3><p className="text-sm text-gray-600 mb-4">Draft a professional follow-up email.</p><button onClick={handleDraftEmail} disabled={isLoading.email} className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 disabled:bg-indigo-300">{isLoading.email ? 'Drafting...' : 'Draft Follow-up Email'}</button>{result.email && <div className="mt-4">{renderResult(result.email)}</div>}</div>
+            <div className="p-4 border dark:border-gray-700 rounded-lg"><h3 className="font-bold text-lg mb-2 dark:text-white">Resume Matcher</h3><p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Analyze your resume against the job description. Ensure you have saved your master resume in the application form.</p><button onClick={handleAnalyzeMatch} disabled={isLoading.match} className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 disabled:bg-indigo-300">{isLoading.match ? 'Analyzing...' : 'Analyze Match'}</button>{result.match && <div className="mt-4">{renderResult(result.match)}</div>}</div>
+            <div className="p-4 border dark:border-gray-700 rounded-lg"><h3 className="font-bold text-lg mb-2 dark:text-white">Interview Prep</h3><p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Generate potential interview questions based on the job details.</p><button onClick={handleGenerateQuestions} disabled={isLoading.questions} className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 disabled:bg-indigo-300">{isLoading.questions ? 'Generating...' : 'Generate Questions'}</button>{result.questions && <div className="mt-4">{renderResult(result.questions)}</div>}</div>
+            <div className="p-4 border dark:border-gray-700 rounded-lg"><h3 className="font-bold text-lg mb-2 dark:text-white">Communication Helper</h3><p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Draft a professional follow-up email.</p><button onClick={handleDraftEmail} disabled={isLoading.email} className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 disabled:bg-indigo-300">{isLoading.email ? 'Drafting...' : 'Draft Follow-up Email'}</button>{result.email && <div className="mt-4">{renderResult(result.email)}</div>}</div>
         </div>
     );
 };
@@ -263,7 +264,7 @@ const AIAssistant = ({ app }) => {
 
 const Dashboard = ({ applications, statusHistory, isLoading }) => {
     if (isLoading) return <p className="text-center py-8">Loading dashboard...</p>;
-    if (applications.length === 0) return <div className="text-center py-12 bg-white rounded-lg shadow-md"><h3 className="text-lg font-medium text-gray-600">No data for dashboard yet.</h3><p className="text-gray-500 mt-1">Add some applications to see your stats.</p></div>;
+    if (applications.length === 0) return <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-md"><h3 className="text-lg font-medium text-gray-600 dark:text-gray-300">No data for dashboard yet.</h3><p className="text-gray-500 dark:text-gray-400 mt-1">Add some applications to see your stats.</p></div>;
     const totalApps = applications.length;
     const interviewingApps = applications.filter(a => ['Interviewing', 'Offer', 'Aptitude Test(Online)', 'Aptitude Test(Offline)', 'FGD', 'Presentation'].includes(a.status)).length;
     const offerApps = applications.filter(a => a.status === 'Offer').length;
@@ -288,8 +289,8 @@ const Dashboard = ({ applications, statusHistory, isLoading }) => {
     const sankeyData = { nodes, links: Array.from(links.values()) };
     return (
         <div className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6"><div className="bg-white p-6 rounded-lg shadow-md text-center"><h3 className="text-gray-500 uppercase text-sm font-bold">Total Applications</h3><p className="text-4xl font-bold mt-2">{totalApps}</p></div><div className="bg-white p-6 rounded-lg shadow-md text-center"><h3 className="text-gray-500 uppercase text-sm font-bold">Interview Stage Rate</h3><p className="text-4xl font-bold mt-2">{interviewRate}%</p></div><div className="bg-white p-6 rounded-lg shadow-md text-center"><h3 className="text-gray-500 uppercase text-sm font-bold">Offer Rate</h3><p className="text-4xl font-bold mt-2">{offerRate}%</p></div></div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8"><div className="bg-white p-6 rounded-lg shadow-md"><h3 className="font-bold mb-4">Source Effectiveness</h3><ResponsiveContainer width="100%" height={300}><BarChart data={sourceData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="name" /><YAxis /><Tooltip /><Legend /><Bar dataKey="applications" fill="#8884d8" name="Total Apps" /><Bar dataKey="interviews" fill="#82ca9d" name="Interviews" /></BarChart></ResponsiveContainer></div><div className="bg-white p-6 rounded-lg shadow-md"><h3 className="font-bold mb-4">Application Funnel</h3>{sankeyData.nodes.length > 0 && sankeyData.links.length > 0 ? (<ResponsiveContainer width="100%" height={300}><Sankey data={sankeyData} node={{stroke: '#777', strokeWidth: 1}} nodePadding={50} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}><Tooltip /></Sankey></ResponsiveContainer>) : <p className="text-gray-500 text-center pt-16">Not enough status history. Update job statuses to see the funnel.</p>}</div></div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6"><div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center"><h3 className="text-gray-500 dark:text-gray-400 uppercase text-sm font-bold">Total Applications</h3><p className="text-4xl font-bold mt-2 dark:text-white">{totalApps}</p></div><div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center"><h3 className="text-gray-500 dark:text-gray-400 uppercase text-sm font-bold">Interview Stage Rate</h3><p className="text-4xl font-bold mt-2 dark:text-white">{interviewRate}%</p></div><div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center"><h3 className="text-gray-500 dark:text-gray-400 uppercase text-sm font-bold">Offer Rate</h3><p className="text-4xl font-bold mt-2 dark:text-white">{offerRate}%</p></div></div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8"><div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md"><h3 className="font-bold mb-4 dark:text-white">Source Effectiveness</h3><ResponsiveContainer width="100%" height={300}><BarChart data={sourceData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="name" /><YAxis /><Tooltip /><Legend /><Bar dataKey="applications" fill="#8884d8" name="Total Apps" /><Bar dataKey="interviews" fill="#82ca9d" name="Interviews" /></BarChart></ResponsiveContainer></div><div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md"><h3 className="font-bold mb-4 dark:text-white">Application Funnel</h3>{sankeyData.nodes.length > 0 && sankeyData.links.length > 0 ? (<ResponsiveContainer width="100%" height={300}><Sankey data={sankeyData} node={{stroke: '#777', strokeWidth: 1}} nodePadding={50} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}><Tooltip /></Sankey></ResponsiveContainer>) : <p className="text-gray-500 dark:text-gray-400 text-center pt-16">Not enough status history. Update job statuses to see the funnel.</p>}</div></div>
         </div>
     );
 };
@@ -298,7 +299,7 @@ const Dashboard = ({ applications, statusHistory, isLoading }) => {
 // --- FILE: src/components/ApplicationForm.js ---
 // ====================================================================================
 
-const ApplicationForm = ({ application, onSave, onClose }) => {
+const ApplicationForm = ({ application, onSave, onClose, customSources }) => {
     const [formData, setFormData] = useState({
         company: application?.company || '', title: application?.title || '', status: application?.status || 'Applied',
         deadline: application?.deadline ? application.deadline.split('T')[0] : '',
@@ -313,9 +314,10 @@ const ApplicationForm = ({ application, onSave, onClose }) => {
     const handleChange = (e) => { const { name, value } = e.target; setFormData(prev => ({ ...prev, [name]: value })); };
     const handleSubmit = (e) => { e.preventDefault(); const deadlineISO = formData.deadline ? new Date(formData.deadline).toISOString() : ''; const followUpISO = formData.followUpDate ? new Date(formData.followUpDate).toISOString() : ''; onSave({ ...formData, deadline: deadlineISO, followUpDate: followUpISO }); };
     const statusOptions = ['Pending', 'Applied', 'Recruiter Screen', 'Aptitude Test(Online)', 'Aptitude Test(Offline)', 'FGD', 'Presentation', 'Interviewing', 'Offer', 'Rejected', 'Ghosted'];
-    const sourceOptions = ['LinkedIn', 'Company Website', 'Referral', 'Job Board', 'Recruiter', 'Other'];
+    const sourceOptions = ['LinkedIn', 'Company Website', 'Referral', 'Job Board', 'Recruiter', ...customSources, 'Other'];
+
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4"><div ref={modalRef} className="bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-full overflow-y-auto"><form onSubmit={handleSubmit}><div className="p-6"><h2 className="text-2xl font-bold mb-6">{application ? 'Edit Application' : 'Add New Application'}</h2><div className="grid grid-cols-1 md:grid-cols-2 gap-6"><div><label htmlFor="company" className="block text-sm font-medium text-gray-700">Company</label><input type="text" name="company" id="company" value={formData.company} onChange={handleChange} required className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div><div><label htmlFor="title" className="block text-sm font-medium text-gray-700">Job Title</label><input type="text" name="title" id="title" value={formData.title} onChange={handleChange} required className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div><div><label htmlFor="status" className="block text-sm font-medium text-gray-700">Status</label><select name="status" id="status" value={formData.status} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">{statusOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}</select></div><div><label htmlFor="deadline" className="block text-sm font-medium text-gray-700">Application Deadline</label><input type="date" name="deadline" id="deadline" value={formData.deadline} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div><div><label htmlFor="followUpDate" className="block text-sm font-medium text-gray-700">Follow-up On</label><input type="date" name="followUpDate" id="followUpDate" value={formData.followUpDate} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div><div><label htmlFor="source" className="block text-sm font-medium text-gray-700">Source</label><select name="source" id="source" value={formData.source} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">{sourceOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}</select></div><div className="md:col-span-2"><label htmlFor="jobLink" className="block text-sm font-medium text-gray-700">Job Posting Link</label><input type="url" name="jobLink" id="jobLink" value={formData.jobLink} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div><div><label htmlFor="contactName" className="block text-sm font-medium text-gray-700">Contact Name</label><input type="text" name="contactName" id="contactName" value={formData.contactName} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div><div><label htmlFor="contactEmail" className="block text-sm font-medium text-gray-700">Contact Email</label><input type="email" name="contactEmail" id="contactEmail" value={formData.contactEmail} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div><div className="md:col-span-2"><label htmlFor="resumeVersion" className="block text-sm font-medium text-gray-700">Resume/Cover Letter Version</label><input type="text" name="resumeVersion" id="resumeVersion" value={formData.resumeVersion} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div><div className="md:col-span-2"><label htmlFor="notes" className="block text-sm font-medium text-gray-700">Notes</label><textarea name="notes" id="notes" rows="3" value={formData.notes} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea></div><div className="md:col-span-2"><label htmlFor="jobDescription" className="block text-sm font-medium text-gray-700">Job Description</label><textarea name="jobDescription" id="jobDescription" rows="5" value={formData.jobDescription} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea></div><div className="md:col-span-2"><label htmlFor="resumeText" className="block text-sm font-medium text-gray-700">My Master Resume</label><textarea name="resumeText" id="resumeText" rows="5" value={formData.resumeText} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Paste your master resume here for AI analysis..."></textarea></div></div></div><div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3"><button type="button" onClick={onClose} className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button><button type="submit" className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">Save Application</button></div></form></div></div>
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4"><div ref={modalRef} className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-3xl max-h-full overflow-y-auto"><form onSubmit={handleSubmit}><div className="p-6"><h2 className="text-2xl font-bold mb-6 dark:text-white">{application ? 'Edit Application' : 'Add New Application'}</h2><div className="grid grid-cols-1 md:grid-cols-2 gap-6"><div><label htmlFor="company" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Company</label><input type="text" name="company" id="company" value={formData.company} onChange={handleChange} required className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div><div><label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Job Title</label><input type="text" name="title" id="title" value={formData.title} onChange={handleChange} required className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div><div><label htmlFor="status" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label><select name="status" id="status" value={formData.status} onChange={handleChange} className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">{statusOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}</select></div><div><label htmlFor="deadline" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Application Deadline</label><input type="date" name="deadline" id="deadline" value={formData.deadline} onChange={handleChange} className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div><div><label htmlFor="followUpDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Follow-up On</label><input type="date" name="followUpDate" id="followUpDate" value={formData.followUpDate} onChange={handleChange} className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div><div><label htmlFor="source" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Source</label><select name="source" id="source" value={formData.source} onChange={handleChange} className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">{[...new Set(sourceOptions)].map(opt => <option key={opt} value={opt}>{opt}</option>)}</select></div><div className="md:col-span-2"><label htmlFor="jobLink" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Job Posting Link</label><input type="url" name="jobLink" id="jobLink" value={formData.jobLink} onChange={handleChange} className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div><div><label htmlFor="contactName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Name</label><input type="text" name="contactName" id="contactName" value={formData.contactName} onChange={handleChange} className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div><div><label htmlFor="contactEmail" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Email</label><input type="email" name="contactEmail" id="contactEmail" value={formData.contactEmail} onChange={handleChange} className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div><div className="md:col-span-2"><label htmlFor="resumeVersion" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Resume/Cover Letter Version</label><input type="text" name="resumeVersion" id="resumeVersion" value={formData.resumeVersion} onChange={handleChange} className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div><div className="md:col-span-2"><label htmlFor="notes" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label><textarea name="notes" id="notes" rows="3" value={formData.notes} onChange={handleChange} className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea></div><div className="md:col-span-2"><label htmlFor="jobDescription" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Job Description</label><textarea name="jobDescription" id="jobDescription" rows="5" value={formData.jobDescription} onChange={handleChange} className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea></div><div className="md:col-span-2"><label htmlFor="resumeText" className="block text-sm font-medium text-gray-700 dark:text-gray-300">My Master Resume</label><textarea name="resumeText" id="resumeText" rows="5" value={formData.resumeText} onChange={handleChange} className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Paste your master resume here for AI analysis..."></textarea></div></div></div><div className="bg-gray-50 dark:bg-gray-900 px-6 py-4 flex justify-end space-x-3"><button type="button" onClick={onClose} className="bg-white dark:bg-gray-700 py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600">Cancel</button><button type="submit" className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">Save Application</button></div></form></div></div>
     );
 };
 
@@ -326,11 +328,11 @@ const ApplicationForm = ({ application, onSave, onClose }) => {
 const ConfirmDeleteModal = ({ onConfirm, onCancel }) => {
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center">
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
-                <h3 className="text-lg font-bold">Confirm Deletion</h3>
-                <p className="text-gray-600 mt-2">Are you sure you want to delete this application? This action cannot be undone.</p>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-sm">
+                <h3 className="text-lg font-bold dark:text-white">Confirm Deletion</h3>
+                <p className="text-gray-600 dark:text-gray-300 mt-2">Are you sure you want to delete this application? This action cannot be undone.</p>
                 <div className="mt-6 flex justify-end space-x-3">
-                    <button onClick={onCancel} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancel</button>
+                    <button onClick={onCancel} className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">Cancel</button>
                     <button onClick={onConfirm} className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Delete</button>
                 </div>
             </div>
@@ -407,22 +409,22 @@ const ImportModal = ({ onImport, onClose }) => {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl">
                 <div className="p-6">
-                    <h3 className="text-lg font-bold mb-4">Import Applications from CSV</h3>
+                    <h3 className="text-lg font-bold mb-4 dark:text-white">Import Applications from CSV</h3>
                     <input type="file" accept=".csv" onChange={handleFileChange} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
                     {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
                     {data.length > 0 && (
                         <div className="mt-4">
-                            <p className="font-medium">Found {data.length} applications to import. Here's a preview of the first few:</p>
-                            <div className="max-h-60 overflow-y-auto mt-2 border rounded-md p-2 bg-gray-50 text-xs">
+                            <p className="font-medium dark:text-gray-300">Found {data.length} applications to import. Here's a preview of the first few:</p>
+                            <div className="max-h-60 overflow-y-auto mt-2 border dark:border-gray-700 rounded-md p-2 bg-gray-50 dark:bg-gray-900 text-xs">
                                 <pre>{JSON.stringify(data.slice(0, 3), null, 2)}</pre>
                             </div>
                         </div>
                     )}
                 </div>
-                <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
-                    <button onClick={onClose} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancel</button>
+                <div className="bg-gray-50 dark:bg-gray-900 px-6 py-4 flex justify-end space-x-3">
+                    <button onClick={onClose} className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">Cancel</button>
                     <button onClick={() => onImport(data)} disabled={data.length === 0} className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400">Import Applications</button>
                 </div>
             </div>
@@ -431,221 +433,14 @@ const ImportModal = ({ onImport, onClose }) => {
 };
 
 // ====================================================================================
-// --- FILE: src/App.js ---
-// ====================================================================================
-
-export default function App() {
-    const [db, setDb] = useState(null);
-    const [auth, setAuth] = useState(null);
-    const [user, setUser] = useState(null);
-    const [isAuthReady, setIsAuthReady] = useState(false);
-    const [applications, setApplications] = useState([]);
-    const [statusHistory, setStatusHistory] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-    const [editingApplication, setEditingApplication] = useState(null);
-    const [error, setError] = useState(null);
-    const [view, setView] = useState('list'); // 'list', 'dashboard', 'detail'
-    const [selectedAppId, setSelectedAppId] = useState(null);
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const [itemToDelete, setItemToDelete] = useState(null);
-    const [isPapaReady, setIsPapaReady] = useState(false);
-
-    // Dynamically load PapaParse CSV library
-    useEffect(() => {
-        if (window.Papa) {
-            setIsPapaReady(true);
-            return;
-        }
-        const script = document.createElement('script');
-        script.src = 'https://unpkg.com/papaparse@5.3.2/papaparse.min.js';
-        script.async = true;
-        script.onload = () => setIsPapaReady(true);
-        script.onerror = () => setError("Failed to load CSV parsing library. Please refresh.");
-        document.body.appendChild(script);
-        return () => {
-            const scriptElement = document.querySelector('script[src="https://unpkg.com/papaparse@5.3.2/papaparse.min.js"]');
-            if (scriptElement) document.body.removeChild(scriptElement);
-        };
-    }, []);
-
-    // Initialize Firebase
-    useEffect(() => {
-        try {
-            if (Object.keys(firebaseConfig).length > 0 && firebaseConfig.apiKey !== "YOUR_API_KEY") {
-                const app = initializeApp(firebaseConfig);
-                const authInstance = getAuth(app);
-                const dbInstance = getFirestore(app);
-                setDb(dbInstance);
-                setAuth(authInstance);
-                onAuthStateChanged(authInstance, (user) => {
-                    setUser(user);
-                    setIsAuthReady(true);
-                    setIsLoading(false);
-                });
-            } else { setIsLoading(false); setError("Firebase config missing or invalid. Please update it in src/App.js."); }
-        } catch (e) { setIsLoading(false); setError("DB connection failed: " + e.message); }
-    }, []);
-
-    // Set up Firestore listeners
-    useEffect(() => {
-        if (!isAuthReady || !db || !user) {
-            setApplications([]);
-            setStatusHistory([]);
-            return;
-        };
-        
-        const appsPath = `artifacts/${appId}/users/${user.uid}/applications`;
-        const qApps = query(collection(db, appsPath));
-        const unsubApps = onSnapshot(qApps, snap => {
-            const appsData = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            // Sort by creation date, newest first
-            appsData.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
-            setApplications(appsData);
-            if (view !== 'detail') setIsLoading(false);
-        }, err => { setError("Fetch failed."); setIsLoading(false); });
-
-        const historyPath = `artifacts/${appId}/users/${user.uid}/statusHistory`;
-        const qHistory = query(collection(db, historyPath));
-        const unsubHistory = onSnapshot(qHistory, snap => {
-            setStatusHistory(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        }, err => { setError("History fetch failed."); });
-
-        return () => { unsubApps(); unsubHistory(); };
-    }, [isAuthReady, db, user]);
-
-    // --- Data Handlers ---
-    const handleSaveApplication = async (appData) => {
-        if (!db || !user) { setError("DB not ready."); return; }
-        const appsPath = `artifacts/${appId}/users/${user.uid}/applications`;
-        const historyPath = `artifacts/${appId}/users/${user.uid}/statusHistory`;
-        try {
-            const dataToSave = { ...appData };
-            if (editingApplication) {
-                const docRef = doc(db, appsPath, editingApplication.id);
-                const oldStatus = (await getDoc(docRef)).data()?.status;
-                dataToSave.tasks = editingApplication.tasks || [];
-                // Don't overwrite createdAt on edit
-                dataToSave.createdAt = editingApplication.createdAt || serverTimestamp();
-                await setDoc(docRef, dataToSave);
-                if (oldStatus && oldStatus !== appData.status) {
-                    await addDoc(collection(db, historyPath), { fromStatus: oldStatus, toStatus: appData.status, timestamp: serverTimestamp() });
-                }
-            } else {
-                dataToSave.tasks = [];
-                dataToSave.createdAt = serverTimestamp();
-                await addDoc(collection(db, appsPath), dataToSave);
-                await addDoc(collection(db, historyPath), { fromStatus: 'Created', toStatus: appData.status, timestamp: serverTimestamp() });
-            }
-            closeModal();
-        } catch (e) { setError("Save failed: " + e.message); }
-    };
-
-    const requestDelete = (id) => { setItemToDelete(id); setShowDeleteConfirm(true); };
-    const confirmDelete = async () => {
-        if (!db || !user || !itemToDelete) return;
-        try {
-            await deleteDoc(doc(db, `artifacts/${appId}/users/${user.uid}/applications`, itemToDelete));
-            if (selectedAppId === itemToDelete) setView('list');
-            setShowDeleteConfirm(false);
-            setItemToDelete(null);
-        } catch (e) { setError("Delete failed: " + e.message); }
-    };
-
-    const handleBulkImport = async (data) => {
-        if (!db || !user) {
-            setError("Database not connected. Cannot import.");
-            return;
-        }
-        const batch = writeBatch(db);
-        const appsPath = `artifacts/${appId}/users/${user.uid}/applications`;
-        const historyPath = `artifacts/${appId}/users/${user.uid}/statusHistory`;
-
-        data.forEach(item => {
-            const newAppRef = doc(collection(db, appsPath));
-            batch.set(newAppRef, { ...item, tasks: [], createdAt: serverTimestamp() });
-            // Create initial history event for Sankey diagram
-            const newHistoryRef = doc(collection(db, historyPath));
-            batch.set(newHistoryRef, { fromStatus: 'Imported', toStatus: item.status, timestamp: serverTimestamp() });
-        });
-
-        try {
-            await batch.commit();
-            setIsImportModalOpen(false);
-        } catch (e) {
-            setError("Bulk import failed: " + e.message);
-        }
-    };
-    
-    // --- UI Handlers ---
-    const openModal = (app = null) => { setEditingApplication(app); setIsModalOpen(true); };
-    const closeModal = () => { setIsModalOpen(false); setEditingApplication(null); };
-    const handleSetView = (viewName, appId = null) => { setSelectedAppId(appId); setView(viewName); }
-    const handleSignOut = () => {
-        signOut(auth).catch(err => setError("Sign out failed: " + err.message));
-    }
-
-    if (!isAuthReady) {
-        return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-    }
-
-    if (!user) {
-        return <AuthScreen auth={auth} setError={setError} error={error} />;
-    }
-
-    const CurrentView = () => {
-        if (isLoading && view !== 'detail') return <p className="text-center py-8">Loading...</p>;
-        switch (view) {
-            case 'dashboard': return <Dashboard applications={applications} statusHistory={statusHistory} isLoading={isLoading} />;
-            case 'detail': return <ApplicationDetail appId={selectedAppId} db={db} userId={user.uid} setView={handleSetView} onEdit={openModal} onDelete={requestDelete} />;
-            default: return <ApplicationList applications={applications} isLoading={isLoading} onSelectApp={id => handleSetView('detail', id)} onEdit={openModal} onDelete={requestDelete} />;
-        }
-    };
-
-    return (
-        <div className="bg-gray-100 min-h-screen font-sans text-gray-800">
-            <header className="bg-white shadow-sm sticky top-0 z-20">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center py-4">
-                        <h1 className="text-2xl font-bold text-gray-900">Job Tracker</h1>
-                        <div className="flex items-center space-x-2">
-                            <button onClick={() => setIsImportModalOpen(true)} disabled={!isPapaReady} className="flex items-center justify-center bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow transition-transform transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed">
-                                <UploadIcon/> <span className="ml-2 hidden sm:inline">Import CSV</span>
-                            </button>
-                            <button onClick={() => openModal()} className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow transition-transform transform hover:scale-105">
-                                <PlusIcon /> <span className="ml-2 hidden sm:inline">Add Application</span>
-                            </button>
-                            <button onClick={handleSignOut} className="flex items-center justify-center bg-red-500 hover:bg-red-600 text-white font-bold p-2 rounded-full shadow transition-transform transform hover:scale-105" title="Sign Out">
-                                <LogoutIcon />
-                            </button>
-                        </div>
-                    </div>
-                    <nav className="flex space-x-4">
-                        <button onClick={() => handleSetView('list')} className={`flex items-center py-2 px-3 font-medium rounded-t-lg ${view === 'list' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-blue-600'}`}><ListIcon /> All Applications</button>
-                        <button onClick={() => handleSetView('dashboard')} className={`flex items-center py-2 px-3 font-medium rounded-t-lg ${view === 'dashboard' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-blue-600'}`}><ChartIcon /> Dashboard</button>
-                    </nav>
-                </div>
-            </header>
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {error && <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-md" role="alert"><p>{error}</p></div>}
-                <CurrentView />
-            </main>
-            {isModalOpen && <ApplicationForm application={editingApplication} onSave={handleSaveApplication} onClose={closeModal} />}
-            {isImportModalOpen && <ImportModal onImport={handleBulkImport} onClose={() => setIsImportModalOpen(false)} />}
-            {showDeleteConfirm && <ConfirmDeleteModal onConfirm={confirmDelete} onCancel={() => setShowDeleteConfirm(false)} />}
-        </div>
-    );
-}
-
-// ====================================================================================
-// --- FILE: src/components/AuthScreen.js ---
+// --- FILE: src/components/Auth.js ---
 // ====================================================================================
 
 const AuthScreen = ({ auth, error, setError }) => {
     const [isLogin, setIsLogin] = useState(true);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [name, setName] = useState('');
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -654,7 +449,9 @@ const AuthScreen = ({ auth, error, setError }) => {
             if (isLogin) {
                 await signInWithEmailAndPassword(auth, email, password);
             } else {
-                await createUserWithEmailAndPassword(auth, email, password);
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                await updateProfile(userCredential.user, { displayName: name });
+                // We'll create the user settings doc in the main App component
             }
         } catch (err) {
             setError(err.message);
@@ -671,6 +468,14 @@ const AuthScreen = ({ auth, error, setError }) => {
                 </div>
                 <div className="mt-8 bg-white py-8 px-4 shadow-xl sm:rounded-lg sm:px-10">
                     <form className="space-y-6" onSubmit={handleSubmit}>
+                        {!isLogin && (
+                             <div>
+                                <label htmlFor="name" className="block text-sm font-medium text-gray-700">Full Name</label>
+                                <div className="mt-1">
+                                    <input id="name" name="name" type="text" required value={name} onChange={(e) => setName(e.target.value)} className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"/>
+                                </div>
+                            </div>
+                        )}
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email address</label>
                             <div className="mt-1">
@@ -710,3 +515,305 @@ const AuthScreen = ({ auth, error, setError }) => {
         </div>
     );
 };
+
+// ====================================================================================
+// --- FILE: src/components/Settings.js ---
+// ====================================================================================
+
+const Settings = ({ db, userId, userSettings, setUserSettings }) => {
+    const [newSource, setNewSource] = useState('');
+
+    const handleThemeChange = async (theme) => {
+        const newSettings = { ...userSettings, theme };
+        setUserSettings(newSettings);
+        await setDoc(doc(db, `artifacts/${appId}/users/${userId}/settings/user`), newSettings);
+    };
+
+    const handleAddSource = async (e) => {
+        e.preventDefault();
+        if (newSource.trim() === '' || userSettings.customSources.includes(newSource.trim())) {
+            setNewSource('');
+            return;
+        }
+        const newSources = [...userSettings.customSources, newSource.trim()];
+        const newSettings = { ...userSettings, customSources: newSources };
+        setUserSettings(newSettings);
+        await setDoc(doc(db, `artifacts/${appId}/users/${userId}/settings/user`), newSettings);
+        setNewSource('');
+    };
+
+    const handleDeleteSource = async (sourceToDelete) => {
+        const newSources = userSettings.customSources.filter(s => s !== sourceToDelete);
+        const newSettings = { ...userSettings, customSources: newSources };
+        setUserSettings(newSettings);
+        await setDoc(doc(db, `artifacts/${appId}/users/${userId}/settings/user`), newSettings);
+    };
+
+    return (
+        <div className="space-y-8">
+            <div className="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6">
+                <h2 className="text-2xl font-bold mb-4 dark:text-white">Settings</h2>
+                
+                {/* Theme Settings */}
+                <div className="mb-6">
+                    <h3 className="text-lg font-medium mb-2 dark:text-gray-200">Theme</h3>
+                    <div className="flex space-x-4">
+                        <button onClick={() => handleThemeChange('light')} className={`px-4 py-2 rounded-md ${userSettings.theme === 'light' ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}>Light</button>
+                        <button onClick={() => handleThemeChange('dark')} className={`px-4 py-2 rounded-md ${userSettings.theme === 'dark' ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}>Dark</button>
+                    </div>
+                </div>
+
+                {/* Custom Sources Settings */}
+                <div>
+                    <h3 className="text-lg font-medium mb-2 dark:text-gray-200">Custom Job Sources</h3>
+                    <form onSubmit={handleAddSource} className="flex space-x-2 mb-4">
+                        <input type="text" value={newSource} onChange={e => setNewSource(e.target.value)} placeholder="Add a new source..." className="flex-grow border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm sm:text-sm"/>
+                        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Add</button>
+                    </form>
+                    <ul className="space-y-2">
+                        {userSettings.customSources?.map(source => (
+                            <li key={source} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-md">
+                                <span className="dark:text-gray-200">{source}</span>
+                                <button onClick={() => handleDeleteSource(source)} className="text-red-500 hover:text-red-700 p-1"><DeleteIcon/></button>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
+// ====================================================================================
+// --- FILE: src/App.js ---
+// ====================================================================================
+
+export default function App() {
+    const [db, setDb] = useState(null);
+    const [auth, setAuth] = useState(null);
+    const [user, setUser] = useState(null);
+    const [userSettings, setUserSettings] = useState({ theme: 'light', customSources: [] });
+    const [isAuthReady, setIsAuthReady] = useState(false);
+    const [applications, setApplications] = useState([]);
+    const [statusHistory, setStatusHistory] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [editingApplication, setEditingApplication] = useState(null);
+    const [error, setError] = useState(null);
+    const [view, setView] = useState('list'); // 'list', 'dashboard', 'detail', 'settings'
+    const [selectedAppId, setSelectedAppId] = useState(null);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [itemToDelete, setItemToDelete] = useState(null);
+    const [isPapaReady, setIsPapaReady] = useState(false);
+    const [greeting, setGreeting] = useState('');
+
+    const wittyGreetings = [
+        "Let's get this bread.",
+        "Time to track and attack the job market!",
+        "Another day, another application. You've got this!",
+        "Ready to make some career moves?",
+        "Keep calm and apply on.",
+        "Your dream job is out there. Let's find it.",
+        "Organized chaos is still chaos. Good thing you have this tracker!"
+    ];
+
+    useEffect(() => {
+        setGreeting(wittyGreetings[Math.floor(Math.random() * wittyGreetings.length)]);
+    }, []);
+
+    // Dynamically load PapaParse CSV library
+    useEffect(() => {
+        if (window.Papa) { setIsPapaReady(true); return; }
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/papaparse@5.3.2/papaparse.min.js';
+        script.async = true;
+        script.onload = () => setIsPapaReady(true);
+        script.onerror = () => setError("Failed to load CSV parsing library. Please refresh.");
+        document.body.appendChild(script);
+        return () => {
+            const scriptElement = document.querySelector('script[src="https://unpkg.com/papaparse@5.3.2/papaparse.min.js"]');
+            if (scriptElement) document.body.removeChild(scriptElement);
+        };
+    }, []);
+
+    // Initialize Firebase
+    useEffect(() => {
+        try {
+            if (Object.keys(firebaseConfig).length > 0 && firebaseConfig.apiKey !== "YOUR_API_KEY") {
+                const app = initializeApp(firebaseConfig);
+                const authInstance = getAuth(app);
+                const dbInstance = getFirestore(app);
+                setDb(dbInstance);
+                setAuth(authInstance);
+                onAuthStateChanged(authInstance, (user) => {
+                    setUser(user);
+                    setIsAuthReady(true);
+                    if (!user) setIsLoading(false);
+                });
+            } else { setIsLoading(false); setError("Firebase config missing or invalid. Please update it in src/App.js."); }
+        } catch (e) { setIsLoading(false); setError("DB connection failed: " + e.message); }
+    }, []);
+
+    // Set up Firestore listeners
+    useEffect(() => {
+        if (!isAuthReady || !db || !user) {
+            setApplications([]);
+            setStatusHistory([]);
+            return;
+        };
+        
+        const appsPath = `artifacts/${appId}/users/${user.uid}/applications`;
+        const qApps = query(collection(db, appsPath));
+        const unsubApps = onSnapshot(qApps, snap => {
+            const appsData = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            appsData.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+            setApplications(appsData);
+            if (view !== 'detail') setIsLoading(false);
+        }, err => { setError("Fetch failed."); setIsLoading(false); });
+
+        const historyPath = `artifacts/${appId}/users/${user.uid}/statusHistory`;
+        const qHistory = query(collection(db, historyPath));
+        const unsubHistory = onSnapshot(qHistory, snap => {
+            setStatusHistory(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        }, err => { setError("History fetch failed."); });
+        
+        const settingsPath = `artifacts/${appId}/users/${user.uid}/settings/user`;
+        const unsubSettings = onSnapshot(doc(db, settingsPath), (doc) => {
+            if (doc.exists()) {
+                setUserSettings(doc.data());
+            } else {
+                // Create default settings for new user
+                setDoc(doc(db, settingsPath), { theme: 'light', customSources: [] });
+            }
+        });
+
+        return () => { unsubApps(); unsubHistory(); unsubSettings(); };
+    }, [isAuthReady, db, user]);
+
+    // Apply theme
+    useEffect(() => {
+        if (userSettings.theme === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    }, [userSettings.theme]);
+
+    // --- Data Handlers ---
+    const handleSaveApplication = async (appData) => {
+        if (!db || !user) { setError("DB not ready."); return; }
+        const appsPath = `artifacts/${appId}/users/${user.uid}/applications`;
+        const historyPath = `artifacts/${appId}/users/${user.uid}/statusHistory`;
+        try {
+            const dataToSave = { ...appData };
+            if (editingApplication) {
+                const docRef = doc(db, appsPath, editingApplication.id);
+                const oldStatus = (await getDoc(docRef)).data()?.status;
+                dataToSave.tasks = editingApplication.tasks || [];
+                dataToSave.createdAt = editingApplication.createdAt || serverTimestamp();
+                await setDoc(docRef, dataToSave);
+                if (oldStatus && oldStatus !== appData.status) {
+                    await addDoc(collection(db, historyPath), { fromStatus: oldStatus, toStatus: appData.status, timestamp: serverTimestamp() });
+                }
+            } else {
+                dataToSave.tasks = [];
+                dataToSave.createdAt = serverTimestamp();
+                await addDoc(collection(db, appsPath), dataToSave);
+                await addDoc(collection(db, historyPath), { fromStatus: 'Created', toStatus: appData.status, timestamp: serverTimestamp() });
+            }
+            closeModal();
+        } catch (e) { setError("Save failed: " + e.message); }
+    };
+
+    const requestDelete = (id) => { setItemToDelete(id); setShowDeleteConfirm(true); };
+    const confirmDelete = async () => {
+        if (!db || !user || !itemToDelete) return;
+        try {
+            await deleteDoc(doc(db, `artifacts/${appId}/users/${user.uid}/applications`, itemToDelete));
+            if (selectedAppId === itemToDelete) setView('list');
+            setShowDeleteConfirm(false);
+            setItemToDelete(null);
+        } catch (e) { setError("Delete failed: " + e.message); }
+    };
+
+    const handleBulkImport = async (data) => {
+        if (!db || !user) { setError("Database not connected."); return; }
+        const batch = writeBatch(db);
+        const appsPath = `artifacts/${appId}/users/${user.uid}/applications`;
+        const historyPath = `artifacts/${appId}/users/${user.uid}/statusHistory`;
+        data.forEach(item => {
+            const newAppRef = doc(collection(db, appsPath));
+            batch.set(newAppRef, { ...item, tasks: [], createdAt: serverTimestamp() });
+            const newHistoryRef = doc(collection(db, historyPath));
+            batch.set(newHistoryRef, { fromStatus: 'Imported', toStatus: item.status, timestamp: serverTimestamp() });
+        });
+        try {
+            await batch.commit();
+            setIsImportModalOpen(false);
+        } catch (e) { setError("Bulk import failed: " + e.message); }
+    };
+    
+    // --- UI Handlers ---
+    const openModal = (app = null) => { setEditingApplication(app); setIsModalOpen(true); };
+    const closeModal = () => { setIsModalOpen(false); setEditingApplication(null); };
+    const handleSetView = (viewName, appId = null) => { setSelectedAppId(appId); setView(viewName); }
+    const handleSignOut = () => { signOut(auth).catch(err => setError("Sign out failed: " + err.message)); }
+
+    if (!isAuthReady) {
+        return <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">Loading...</div>;
+    }
+
+    if (!user) {
+        return <AuthScreen auth={auth} setError={setError} error={error} />;
+    }
+
+    const CurrentView = () => {
+        if (isLoading && view !== 'detail') return <p className="text-center py-8 dark:text-gray-300">Loading...</p>;
+        switch (view) {
+            case 'dashboard': return <Dashboard applications={applications} statusHistory={statusHistory} isLoading={isLoading} />;
+            case 'detail': return <ApplicationDetail appId={selectedAppId} db={db} userId={user.uid} setView={handleSetView} onEdit={openModal} onDelete={requestDelete} />;
+            case 'settings': return <Settings db={db} userId={user.uid} userSettings={userSettings} setUserSettings={setUserSettings} />;
+            default: return <ApplicationList applications={applications} isLoading={isLoading} onSelectApp={id => handleSetView('detail', id)} onEdit={openModal} onDelete={requestDelete} />;
+        }
+    };
+
+    return (
+        <div className="bg-gray-100 dark:bg-gray-900 min-h-screen font-sans text-gray-800 dark:text-gray-200">
+            <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-20">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex justify-between items-center py-4">
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Job Tracker</h1>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Hi {user.displayName || 'there'}, {greeting}</p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <button onClick={() => setIsImportModalOpen(true)} disabled={!isPapaReady} className="flex items-center justify-center bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow transition-transform transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                                <UploadIcon/> <span className="ml-2 hidden sm:inline">Import CSV</span>
+                            </button>
+                            <button onClick={() => openModal()} className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow transition-transform transform hover:scale-105">
+                                <PlusIcon /> <span className="ml-2 hidden sm:inline">Add Application</span>
+                            </button>
+                            <button onClick={handleSignOut} className="flex items-center justify-center bg-red-500 hover:bg-red-600 text-white font-bold p-2 rounded-full shadow transition-transform transform hover:scale-105" title="Sign Out">
+                                <LogoutIcon />
+                            </button>
+                        </div>
+                    </div>
+                    <nav className="flex space-x-4">
+                        <button onClick={() => handleSetView('list')} className={`flex items-center py-2 px-3 font-medium rounded-t-lg ${view === 'list' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400'}`}><ListIcon /> All Applications</button>
+                        <button onClick={() => handleSetView('dashboard')} className={`flex items-center py-2 px-3 font-medium rounded-t-lg ${view === 'dashboard' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400'}`}><ChartIcon /> Dashboard</button>
+                        <button onClick={() => handleSetView('settings')} className={`flex items-center py-2 px-3 font-medium rounded-t-lg ${view === 'settings' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400'}`}><SettingsIcon /> Settings</button>
+                    </nav>
+                </div>
+            </header>
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {error && <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-md" role="alert"><p>{error}</p></div>}
+                <CurrentView />
+            </main>
+            {isModalOpen && <ApplicationForm application={editingApplication} onSave={handleSaveApplication} onClose={closeModal} customSources={userSettings.customSources} />}
+            {isImportModalOpen && <ImportModal onImport={handleBulkImport} onClose={() => setIsImportModalOpen(false)} />}
+            {showDeleteConfirm && <ConfirmDeleteModal onConfirm={confirmDelete} onCancel={() => setShowDeleteConfirm(false)} />}
+        </div>
+    );
+}
