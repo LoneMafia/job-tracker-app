@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile } from 'firebase/auth';
 import { getFirestore, collection, doc, addDoc, getDoc, setDoc, deleteDoc, onSnapshot, query, serverTimestamp, updateDoc, arrayUnion, arrayRemove, writeBatch } from 'firebase/firestore';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Sankey, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Sankey, PieChart, Pie, Cell, LineChart, Line, Label } from 'recharts';
 // PapaParse is now loaded dynamically via a script tag
 
 // --- IMPORTANT: REPLACE THIS with the firebaseConfig object from your own Firebase project settings. ---
@@ -262,19 +262,46 @@ const AIAssistant = ({ app }) => {
 // --- FILE: src/components/Dashboard.js ---
 // ====================================================================================
 
+const SankeyNode = ({ x, y, width, height, index, payload, containerWidth }) => {
+    const isOutlier = payload.name === 'Rejected' || payload.name === 'Ghosted';
+    return (
+        <g transform={`translate(${x},${y})`}>
+            <rect height={height} width={width} fill={payload.color} stroke="#333" strokeWidth="1" rx="2" ry="2" />
+            <text
+                textAnchor="middle"
+                x={width / 2}
+                y={height / 2}
+                dy="0.35em"
+                fill="white"
+                style={{ fontWeight: 'bold' }}
+            >
+                {`${payload.name} (${payload.value})`}
+            </text>
+        </g>
+    );
+};
+
 const Dashboard = ({ applications, statusHistory, isLoading }) => {
     if (isLoading) return <p className="text-center py-8">Loading dashboard...</p>;
     if (applications.length === 0) return <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-md"><h3 className="text-lg font-medium text-gray-600 dark:text-gray-300">No data for dashboard yet.</h3><p className="text-gray-500 dark:text-gray-400 mt-1">Add some applications to see your stats.</p></div>;
 
     try {
-        const statusOrder = ['Applied', 'Recruiter Screen', 'Aptitude Test(Online)', 'Aptitude Test(Offline)', 'FGD', 'Presentation', 'Interviewing', 'Offer'];
+        const statusOrder = ['Pending','Applied', 'Recruiter Screen', 'Aptitude Test(Online)', 'Aptitude Test(Offline)', 'FGD', 'Presentation', 'Interviewing', 'Offer'];
         const positiveStatuses = new Set(statusOrder);
-        
-        // Sankey Diagram Logic
-        const nodes = statusOrder.map(name => ({ name }));
-        nodes.push({ name: 'Rejected' }, { name: 'Ghosted' });
+        const colorPalette = ["#8884d8", "#83a6ed", "#8dd1e1", "#82ca9d", "#a4de6c", "#d0ed57", "#ffc658", "#22c55e"];
+        const endNodeColors = { 'Rejected': '#ef4444', 'Ghosted': '#f97316', 'Offer': '#22c55e' };
 
+        // Sankey Diagram Logic
+        const allStatuses = ['Total Applications', ...statusOrder, 'Rejected', 'Ghosted'];
+        const nodes = allStatuses.map((name, index) => ({
+            name,
+            color: endNodeColors[name] || colorPalette[index % colorPalette.length] || "#8884d8"
+        }));
+        
         let links = new Map();
+        
+        // Initial link from Total to Pending
+        links.set(`Total Applications->Pending`, applications.length);
 
         applications.forEach(app => {
             const currentStatusIndex = statusOrder.indexOf(app.status);
@@ -286,14 +313,14 @@ const Dashboard = ({ applications, statusHistory, isLoading }) => {
                     const key = `${source}->${target}`;
                     links.set(key, (links.get(key) || 0) + 1);
                 }
-            } else { 
+            } else { // Handle drop-offs
                 const relevantHistory = statusHistory
                     .filter(h => h.appId === app.id && positiveStatuses.has(h.toStatus))
                     .sort((a,b) => (b.timestamp?.toMillis() || 0) - (a.timestamp?.toMillis() || 0));
                 
                 const lastPositiveStatus = relevantHistory[0]?.toStatus || 'Applied';
-                
                 const lastPositiveIndex = statusOrder.indexOf(lastPositiveStatus);
+
                 for (let i = 0; i < lastPositiveIndex; i++) {
                     const source = statusOrder[i];
                     const target = statusOrder[i+1];
@@ -314,16 +341,13 @@ const Dashboard = ({ applications, statusHistory, isLoading }) => {
                     target: nodes.findIndex(n => n.name === targetName),
                     value
                 };
-            }).filter(link => link.source !== -1 && link.target !== -1) // Ensure nodes exist
+            }).filter(link => link.source !== -1 && link.target !== -1 && link.value > 0)
         };
 
         // Status Breakdown Chart Logic
-        const statusCounts = applications.reduce((acc, app) => {
-            acc[app.status] = (acc[app.status] || 0) + 1;
-            return acc;
-        }, {});
+        const statusCounts = applications.reduce((acc, app) => { acc[app.status] = (acc[app.status] || 0) + 1; return acc; }, {});
         const pieData = Object.entries(statusCounts).map(([name, value]) => ({ name, value }));
-        const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#d0ed57', '#a4de6c', '#8dd1e1', '#83a6ed'];
+        const PIE_COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#d0ed57', '#a4de6c', '#8dd1e1', '#83a6ed'];
 
         // Application Timeline Logic
         const appsByWeek = applications.reduce((acc, app) => {
@@ -337,10 +361,7 @@ const Dashboard = ({ applications, statusHistory, isLoading }) => {
             }
             return acc;
         }, {});
-        
-        const timelineData = Object.values(appsByWeek)
-            .sort((a, b) => a.date - b.date)
-            .slice(-12); // Last 12 weeks
+        const timelineData = Object.values(appsByWeek).sort((a, b) => a.date - b.date).slice(-12);
 
         // Avg Time to First Response Logic
         let totalDays = 0;
@@ -364,17 +385,17 @@ const Dashboard = ({ applications, statusHistory, isLoading }) => {
             <div className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center"><h3 className="text-gray-500 dark:text-gray-400 uppercase text-sm font-bold">Total Applications</h3><p className="text-4xl font-bold mt-2 dark:text-white">{applications.length}</p></div>
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center"><h3 className="text-gray-500 dark:text-gray-400 uppercase text-sm font-bold">Interview Stage</h3><p className="text-4xl font-bold mt-2 dark:text-white">{applications.filter(a => positiveStatuses.has(a.status) && a.status !== 'Applied').length}</p></div>
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center"><h3 className="text-gray-500 dark:text-gray-400 uppercase text-sm font-bold">Interview Stage</h3><p className="text-4xl font-bold mt-2 dark:text-white">{applications.filter(a => positiveStatuses.has(a.status) && a.status !== 'Applied' && a.status !== 'Pending').length}</p></div>
                     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center"><h3 className="text-gray-500 dark:text-gray-400 uppercase text-sm font-bold">Offers</h3><p className="text-4xl font-bold mt-2 dark:text-white">{applications.filter(a => a.status === 'Offer').length}</p></div>
                     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center"><h3 className="text-gray-500 dark:text-gray-400 uppercase text-sm font-bold">Avg. Time to Respond</h3><p className="text-4xl font-bold mt-2 dark:text-white">{avgResponseDays} <span className="text-lg">days</span></p></div>
                 </div>
-                 <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md"><h3 className="font-bold mb-4 dark:text-white">Application Funnel</h3>{sankeyData.nodes.length > 0 && sankeyData.links.length > 0 ? (<ResponsiveContainer width="100%" height={400}><Sankey data={sankeyData} node={{stroke: '#777', strokeWidth: 1}} nodePadding={50} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}><Tooltip /></Sankey></ResponsiveContainer>) : <p className="text-gray-500 dark:text-gray-400 text-center pt-16">Not enough data for a funnel. Apply to some jobs!</p>}</div>
+                 <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md"><h3 className="font-bold mb-4 dark:text-white">Application Funnel</h3>{sankeyData.nodes.length > 0 && sankeyData.links.length > 0 ? (<ResponsiveContainer width="100%" height={500}><Sankey data={sankeyData} node={<SankeyNode />} nodePadding={30} margin={{ top: 20, right: 30, left: 30, bottom: 20 }}><Tooltip /></Sankey></ResponsiveContainer>) : <p className="text-gray-500 dark:text-gray-400 text-center pt-16">Not enough data for a funnel. Apply to some jobs!</p>}</div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md"><h3 className="font-bold mb-4 dark:text-white">Status Breakdown</h3>
                         <ResponsiveContainer width="100%" height={300}>
                             <PieChart>
                                 <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="#8884d8" label>
-                                    {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                                    {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />)}
                                 </Pie>
                                 <Tooltip />
                             </PieChart>
@@ -397,7 +418,7 @@ const Dashboard = ({ applications, statusHistory, isLoading }) => {
         );
     } catch (error) {
         console.error("Dashboard rendering error:", error);
-        return <div className="bg-red-100 text-red-700 p-4 rounded-lg">An error occurred while rendering the dashboard. Please check the console for details.</div>
+        return <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg">An error occurred while rendering the dashboard. Please check the console for details.</div>
     }
 };
 
