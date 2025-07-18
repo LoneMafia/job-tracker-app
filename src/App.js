@@ -150,7 +150,6 @@ export default function App() {
 
         data.forEach(item => {
             const newAppRef = doc(collection(db, appsPath));
-            // The deadline is now pre-formatted by the importer
             batch.set(newAppRef, { ...item, tasks: [] });
         });
 
@@ -484,31 +483,43 @@ const ImportModal = ({ onImport, onClose }) => {
                 complete: (results) => {
                     if (results.errors.length > 0) {
                         setError("Error parsing CSV file. Please check the file format.");
+                        setData([]);
                         return;
                     }
-                    const mappedData = results.data.map(row => {
-                        const dateString = row['Application Date'];
-                        let formattedDate = '';
-                        if (dateString) {
-                            const parts = dateString.split('/');
-                            if (parts.length === 3) {
-                                // Convert D/M/YYYY or DD/MM/YYYY to MM/DD/YYYY for robust parsing
-                                formattedDate = `${parts[1]}/${parts[0]}/${parts[2]}`;
+                    try {
+                        const mappedData = results.data.map(row => {
+                            const dateString = row['Application Date'];
+                            let formattedDate = '';
+                            if (dateString) {
+                                const parts = dateString.split('/');
+                                if (parts.length === 3) {
+                                    // Convert D/M/YYYY or DD/MM/YYYY to a format JS Date constructor can handle reliably
+                                    // YYYY-MM-DD is the most reliable format
+                                    formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                                }
                             }
-                        }
-                        return {
-                            company: row['Company'] || '',
-                            title: row['Title'] || '',
-                            status: row['Status'] || 'Pending',
-                            deadline: formattedDate ? new Date(formattedDate).toISOString() : '',
-                            jobLink: '', // Leave blank as it's not a URL in the sheet
-                            contactName: row['Contact'] || '',
-                            notes: row['Notes'] || '',
-                            salary: row['Salary (est/posted)'] || '',
-                            source: row['Job Posting Link'] || 'CSV Import' // Use this column for source
-                        };
-                    });
-                    setData(mappedData);
+                            const dateObj = new Date(formattedDate);
+                            if (isNaN(dateObj.getTime())) {
+                                // Handle invalid date case for this row
+                                console.warn("Invalid date found for row:", row);
+                            }
+                            return {
+                                company: row['Company'] || '',
+                                title: row['Title'] || '',
+                                status: row['Status'] || 'Pending',
+                                deadline: formattedDate && !isNaN(dateObj.getTime()) ? dateObj.toISOString() : '',
+                                jobLink: '', // Leave blank as it's not a URL in the sheet
+                                contactName: row['Contact'] || '',
+                                notes: row['Notes'] || '',
+                                salary: row['Salary (est/posted)'] || '',
+                                source: row['Job Posting Link'] || 'CSV Import' // Use this column for source
+                            };
+                        });
+                        setData(mappedData);
+                    } catch (err) {
+                        setError("Failed to process rows. Please check data format, especially dates.");
+                        setData([]);
+                    }
                 }
             });
         } else {
