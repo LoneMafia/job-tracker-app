@@ -149,7 +149,13 @@ const ApplicationDetail = ({ appId, db, userId, setView, onEdit, onDelete }) => 
                 <div className="flex border-b dark:border-gray-700 mb-4">
                     <button onClick={() => setDetailView('info')} className={`py-2 px-4 font-medium ${detailView === 'info' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`}>Details</button>
                     <button onClick={() => setDetailView('tasks')} className={`py-2 px-4 font-medium ${detailView === 'tasks' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`}>Tasks ({app.tasks?.length || 0})</button>
-                    <button onClick={() => setDetailView('ai')} className={`flex items-center py-2 px-4 font-medium ${detailView === 'ai' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`}><SparklesIcon/> AI Assistant</button>
+                    <button onClick={() => setDetailView('ai')} className={`relative flex items-center py-2 px-4 font-medium ${detailView === 'ai' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                        <SparklesIcon/> AI Assistant
+                        <span className="absolute top-1 right-0 flex h-3 w-3">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-sky-500"></span>
+                        </span>
+                    </button>
                 </div>
 
                 {detailView === 'info' && (
