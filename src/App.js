@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, collection, doc, addDoc, getDoc, setDoc, deleteDoc, onSnapshot, query, serverTimestamp, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { getFirestore, collection, doc, addDoc, getDoc, setDoc, deleteDoc, onSnapshot, query, serverTimestamp, updateDoc, arrayUnion, arrayRemove, writeBatch } from 'firebase/firestore';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Sankey } from 'recharts';
+// import Papa from 'papaparse'; // This is now loaded dynamically
 
 // --- IMPORTANT: REPLACE THIS with the firebaseConfig object from your own Firebase project settings. ---
 const firebaseConfig = {
@@ -26,6 +27,7 @@ const ListIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w
 const BackIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>);
 const CalendarIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>);
 const SparklesIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m1-12a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1h-6a1 1 0 01-1-1V6zM17.66 17.66l-1.42-1.42m1.42 0l-1.42 1.42m0-1.42l1.42 1.42m1.42-1.42l-1.42-1.42" /></svg>);
+const UploadIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>);
 
 // --- Main App Component ---
 export default function App() {
@@ -36,12 +38,32 @@ export default function App() {
     const [statusHistory, setStatusHistory] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [editingApplication, setEditingApplication] = useState(null);
     const [error, setError] = useState(null);
     const [view, setView] = useState('list'); // 'list', 'dashboard', 'detail'
     const [selectedAppId, setSelectedAppId] = useState(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [itemToDelete, setItemToDelete] = useState(null);
+    const [isPapaReady, setIsPapaReady] = useState(false);
+
+    // Dynamically load PapaParse CSV library
+    useEffect(() => {
+        if (window.Papa) {
+            setIsPapaReady(true);
+            return;
+        }
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/papaparse@5.3.2/papaparse.min.js';
+        script.async = true;
+        script.onload = () => setIsPapaReady(true);
+        script.onerror = () => setError("Failed to load CSV parsing library. Please refresh.");
+        document.body.appendChild(script);
+        return () => {
+            const scriptElement = document.querySelector('script[src="https://unpkg.com/papaparse@5.3.2/papaparse.min.js"]');
+            if (scriptElement) document.body.removeChild(scriptElement);
+        };
+    }, []);
 
     useEffect(() => {
         try {
@@ -118,6 +140,28 @@ export default function App() {
     const closeModal = () => { setIsModalOpen(false); setEditingApplication(null); };
     const handleSetView = (viewName, appId = null) => { setSelectedAppId(appId); setView(viewName); }
 
+    const handleBulkImport = async (data) => {
+        if (!db || !userId) {
+            setError("Database not connected. Cannot import.");
+            return;
+        }
+        const batch = writeBatch(db);
+        const appsPath = `artifacts/${appId}/users/${userId}/applications`;
+
+        data.forEach(item => {
+            const newAppRef = doc(collection(db, appsPath));
+            const deadline = item.deadline ? new Date(item.deadline).toISOString() : '';
+            batch.set(newAppRef, { ...item, deadline, tasks: [] });
+        });
+
+        try {
+            await batch.commit();
+            setIsImportModalOpen(false);
+        } catch (e) {
+            setError("Bulk import failed: " + e.message);
+        }
+    };
+
     const CurrentView = () => {
         if (isLoading && view !== 'detail') return <p className="text-center py-8">Loading...</p>;
         switch (view) {
@@ -133,9 +177,14 @@ export default function App() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center py-4">
                         <h1 className="text-2xl font-bold text-gray-900">Job Tracker</h1>
-                        <button onClick={() => openModal()} className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow transition-transform transform hover:scale-105">
-                            <PlusIcon /> <span className="ml-2 hidden sm:inline">Add Application</span>
-                        </button>
+                        <div className="flex items-center space-x-2">
+                            <button onClick={() => setIsImportModalOpen(true)} disabled={!isPapaReady} className="flex items-center justify-center bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow transition-transform transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                                <UploadIcon/> <span className="ml-2 hidden sm:inline">Import CSV</span>
+                            </button>
+                            <button onClick={() => openModal()} className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow transition-transform transform hover:scale-105">
+                                <PlusIcon /> <span className="ml-2 hidden sm:inline">Add Application</span>
+                            </button>
+                        </div>
                     </div>
                     <nav className="flex space-x-4">
                         <button onClick={() => handleSetView('list')} className={`flex items-center py-2 px-3 font-medium rounded-t-lg ${view === 'list' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-blue-600'}`}><ListIcon /> All Applications</button>
@@ -148,6 +197,7 @@ export default function App() {
                 <CurrentView />
             </main>
             {isModalOpen && <ApplicationForm application={editingApplication} onSave={handleSaveApplication} onClose={closeModal} />}
+            {isImportModalOpen && <ImportModal onImport={handleBulkImport} onClose={() => setIsImportModalOpen(false)} />}
             {showDeleteConfirm && <ConfirmDeleteModal onConfirm={confirmDelete} onCancel={() => setShowDeleteConfirm(false)} />}
         </div>
     );
@@ -379,6 +429,7 @@ const Dashboard = ({ applications, statusHistory, isLoading }) => {
     );
 };
 
+// --- Form & Modal Components ---
 const ApplicationForm = ({ application, onSave, onClose }) => {
     const [formData, setFormData] = useState({
         company: application?.company || '', title: application?.title || '', status: application?.status || 'Applied',
@@ -409,6 +460,73 @@ const ConfirmDeleteModal = ({ onConfirm, onCancel }) => {
                 <div className="mt-6 flex justify-end space-x-3">
                     <button onClick={onCancel} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancel</button>
                     <button onClick={onConfirm} className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Delete</button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const ImportModal = ({ onImport, onClose }) => {
+    const [file, setFile] = useState(null);
+    const [data, setData] = useState([]);
+    const [error, setError] = useState('');
+
+    const handleFileChange = (e) => {
+        const selectedFile = e.target.files[0];
+        if (selectedFile && selectedFile.type === 'text/csv') {
+            setFile(selectedFile);
+            setError('');
+            // Use window.Papa which was loaded dynamically
+            window.Papa.parse(selectedFile, {
+                header: true,
+                skipEmptyLines: true,
+                complete: (results) => {
+                    const mappedData = results.data.map(row => ({
+                        company: row['Company'] || '',
+                        title: row['Title'] || '',
+                        status: row['Status'] || 'Pending',
+                        deadline: row['Application Date'] || '',
+                        jobLink: row['Job Posting Link'] || '',
+                        contactName: row['Contact'] || '',
+                        notes: row['Notes'] || '',
+                        salary: row['Salary (est/posted)'] || '',
+                        source: 'CSV Import'
+                    }));
+                    setData(mappedData);
+                }
+            });
+        } else {
+            setError('Please select a valid .csv file.');
+            setFile(null);
+            setData([]);
+        }
+    };
+
+    const handleImportClick = () => {
+        if (data.length > 0) {
+            onImport(data);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl">
+                <div className="p-6">
+                    <h3 className="text-lg font-bold mb-4">Import Applications from CSV</h3>
+                    <input type="file" accept=".csv" onChange={handleFileChange} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+                    {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+                    {data.length > 0 && (
+                        <div className="mt-4">
+                            <p className="font-medium">Found {data.length} applications to import. Here's a preview of the first few:</p>
+                            <div className="max-h-60 overflow-y-auto mt-2 border rounded-md p-2 bg-gray-50 text-xs">
+                                <pre>{JSON.stringify(data.slice(0, 3), null, 2)}</pre>
+                            </div>
+                        </div>
+                    )}
+                </div>
+                <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
+                    <button onClick={onClose} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancel</button>
+                    <button onClick={handleImportClick} disabled={data.length === 0} className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400">Import Applications</button>
                 </div>
             </div>
         </div>
