@@ -2,17 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, collection, doc, addDoc, getDoc, setDoc, deleteDoc, onSnapshot, query, serverTimestamp, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
-import { setLogLevel } from 'firebase/firestore';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Sankey } from 'recharts';
 
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// --- IMPORTANT: REPLACE THIS with the firebaseConfig object from your own Firebase project settings. ---
 const firebaseConfig = {
   apiKey: "AIzaSyDGQozcym3Af40v8E8b2tSAjqph_2y455Y",
   authDomain: "job-application-tracker-248a6.firebaseapp.com",
@@ -22,10 +14,6 @@ const firebaseConfig = {
   appId: "1:537204034923:web:b007972c8a980add72902e",
   measurementId: "G-44GC43NFEB"
 };
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
 const appId = 'default-app-id'; // This can remain as is
 
 // --- Icon Components ---
@@ -38,7 +26,6 @@ const ListIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w
 const BackIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>);
 const CalendarIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>);
 const SparklesIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m1-12a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1h-6a1 1 0 01-1-1V6zM17.66 17.66l-1.42-1.42m1.42 0l-1.42 1.42m0-1.42l1.42 1.42m1.42-1.42l-1.42-1.42" /></svg>);
-
 
 // --- Main App Component ---
 export default function App() {
@@ -63,7 +50,6 @@ export default function App() {
                 const authInstance = getAuth(app);
                 const dbInstance = getFirestore(app);
                 setDb(dbInstance);
-                setLogLevel('debug');
                 onAuthStateChanged(authInstance, user => {
                     if (user) setUserId(user.uid);
                     else signInAnonymously(authInstance).catch(err => setError("Sign-in failed: " + err.message));
@@ -353,13 +339,8 @@ const AIAssistant = ({ app }) => {
         <div className="space-y-6">
             {error && <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md" role="alert"><p>{error}</p></div>}
             
-            {/* Resume/JD Matcher */}
             <div className="p-4 border rounded-lg"><h3 className="font-bold text-lg mb-2">Resume Matcher</h3><p className="text-sm text-gray-600 mb-4">Analyze your resume against the job description. Ensure you have saved your master resume in the application form.</p><button onClick={handleAnalyzeMatch} disabled={isLoading.match} className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 disabled:bg-indigo-300">{isLoading.match ? 'Analyzing...' : 'Analyze Match'}</button>{result.match && <div className="mt-4">{renderResult(result.match)}</div>}</div>
-            
-            {/* Interview Prep */}
             <div className="p-4 border rounded-lg"><h3 className="font-bold text-lg mb-2">Interview Prep</h3><p className="text-sm text-gray-600 mb-4">Generate potential interview questions based on the job details.</p><button onClick={handleGenerateQuestions} disabled={isLoading.questions} className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 disabled:bg-indigo-300">{isLoading.questions ? 'Generating...' : 'Generate Questions'}</button>{result.questions && <div className="mt-4">{renderResult(result.questions)}</div>}</div>
-
-            {/* Communication Helper */}
             <div className="p-4 border rounded-lg"><h3 className="font-bold text-lg mb-2">Communication Helper</h3><p className="text-sm text-gray-600 mb-4">Draft a professional follow-up email.</p><button onClick={handleDraftEmail} disabled={isLoading.email} className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 disabled:bg-indigo-300">{isLoading.email ? 'Drafting...' : 'Draft Follow-up Email'}</button>{result.email && <div className="mt-4">{renderResult(result.email)}</div>}</div>
         </div>
     );
@@ -398,7 +379,6 @@ const Dashboard = ({ applications, statusHistory, isLoading }) => {
     );
 };
 
-// --- Form & Modal Components ---
 const ApplicationForm = ({ application, onSave, onClose }) => {
     const [formData, setFormData] = useState({
         company: application?.company || '', title: application?.title || '', status: application?.status || 'Applied',
