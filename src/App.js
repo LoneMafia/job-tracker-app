@@ -33,6 +33,7 @@ const SparklesIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h
 const UploadIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>);
 const LogoutIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>);
 const SettingsIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>);
+const MenuIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>);
 
 // ====================================================================================
 // --- FILE: src/components/ApplicationList.js ---
@@ -263,7 +264,6 @@ const AIAssistant = ({ app }) => {
 // ====================================================================================
 
 const SankeyNode = ({ x, y, width, height, index, payload, containerWidth }) => {
-    const isOutlier = payload.name === 'Rejected' || payload.name === 'Ghosted';
     return (
         <g transform={`translate(${x},${y})`}>
             <rect height={height} width={width} fill={payload.color} stroke="#333" strokeWidth="1" rx="2" ry="2" />
@@ -897,6 +897,7 @@ export default function App() {
     const [itemToDelete, setItemToDelete] = useState(null);
     const [isPapaReady, setIsPapaReady] = useState(false);
     const [greeting, setGreeting] = useState('');
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const wittyGreetings = [
         "Let's get this bread.",
@@ -1047,7 +1048,7 @@ export default function App() {
     // --- UI Handlers ---
     const openModal = (app = null) => { setEditingApplication(app); setIsModalOpen(true); };
     const closeModal = () => { setIsModalOpen(false); setEditingApplication(null); };
-    const handleSetView = (viewName, appId = null) => { setSelectedAppId(appId); setView(viewName); }
+    const handleSetView = (viewName, appId = null) => { setSelectedAppId(appId); setView(viewName); setIsSidebarOpen(false); }
     const handleSignOut = () => { signOut(auth).catch(err => setError("Sign out failed: " + err.message)); }
 
     if (!isAuthReady) {
@@ -1070,30 +1071,39 @@ export default function App() {
 
     return (
         <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900 font-sans text-gray-800 dark:text-gray-200">
-            <Sidebar user={user} userSettings={userSettings} view={view} setView={handleSetView} onSignOut={handleSignOut} onOpenProfile={() => setIsProfileModalOpen(true)} />
+            {/* Mobile Sidebar Overlay */}
+            <div onClick={() => setIsSidebarOpen(false)} className={`fixed inset-0 bg-black bg-opacity-50 z-20 transition-opacity lg:hidden ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}></div>
+            <div className={`fixed lg:relative transform top-0 left-0 h-full z-30 transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
+                <Sidebar user={user} userSettings={userSettings} view={view} setView={handleSetView} onSignOut={handleSignOut} onOpenProfile={() => setIsProfileModalOpen(true)} />
+            </div>
+
             <div className="flex-1 flex flex-col">
-                <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-10 lg:hidden">
-                    {/* Mobile Header */}
+                 <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-10">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex justify-between items-center py-4">
-                            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Job Tracker</h1>
-                            <button onClick={handleSignOut} className="p-2 text-gray-500"><LogoutIcon /></button>
+                            <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 text-gray-500 dark:text-gray-400">
+                                <MenuIcon />
+                            </button>
+                            <div className="hidden lg:block">
+                                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Hi {user.displayName || 'there'},</h1>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">{greeting}</p>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <button onClick={() => setIsImportModalOpen(true)} disabled={!isPapaReady} className="flex items-center justify-center bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg shadow text-sm transition-transform transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                                    <UploadIcon/> <span className="ml-2 hidden sm:inline">Import CSV</span>
+                                </button>
+                                <button onClick={() => openModal()} className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded-lg shadow text-sm transition-transform transform hover:scale-105">
+                                    <PlusIcon /> <span className="ml-2 hidden sm:inline">Add Application</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </header>
                 <main className="flex-1 p-4 sm:p-6 lg:p-8">
                     <div className="max-w-7xl mx-auto">
-                        <div className="mb-6">
+                        <div className="lg:hidden mb-6">
                             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Hi {user.displayName || 'there'},</h1>
                             <p className="text-sm text-gray-500 dark:text-gray-400">{greeting}</p>
-                        </div>
-                        <div className="flex justify-end mb-4">
-                             <button onClick={() => setIsImportModalOpen(true)} disabled={!isPapaReady} className="flex items-center justify-center bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg shadow text-sm mr-2 transition-transform transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed">
-                                <UploadIcon/> <span className="ml-2 hidden sm:inline">Import CSV</span>
-                            </button>
-                            <button onClick={() => openModal()} className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded-lg shadow text-sm transition-transform transform hover:scale-105">
-                                <PlusIcon /> <span className="ml-2 hidden sm:inline">Add Application</span>
-                            </button>
                         </div>
                         {error && <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-md" role="alert"><p>{error}</p></div>}
                         <MainContent />
