@@ -102,17 +102,27 @@ const ApplicationList = ({ applications, isLoading, onSelectApp, onEdit, onDelet
 const ApplicationDetail = ({ appId, db, userId, setView, onEdit, onDelete }) => {
     const [app, setApp] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [detailView, setDetailView] = useState('info'); // info, tasks, ai
+    const [notFound, setNotFound] = useState(false);
+    const [detailView, setDetailView] = useState('info');
 
     useEffect(() => {
+        if (!appId || !db || !userId) {
+            setView('list');
+            return;
+        }
         setIsLoading(true);
+        setNotFound(false);
         const docRef = doc(db, `artifacts/${appId}/users/${userId}/applications`, appId);
         const unsubscribe = onSnapshot(docRef, (doc) => {
             if (doc.exists()) {
                 setApp({ id: doc.id, ...doc.data() });
             } else {
-                setView('list');
+                setNotFound(true);
             }
+            setIsLoading(false);
+        }, (error) => {
+            console.error("Error fetching application:", error);
+            setNotFound(true);
             setIsLoading(false);
         });
         return () => unsubscribe();
@@ -130,6 +140,19 @@ const ApplicationDetail = ({ appId, db, userId, setView, onEdit, onDelete }) => 
     };
 
     if (isLoading) return <p className="text-center py-8">Loading application details...</p>;
+
+    if (notFound) {
+        return (
+            <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                <h3 className="text-lg font-medium text-gray-600 dark:text-gray-300">Application Not Found</h3>
+                <p className="text-gray-500 dark:text-gray-400 mt-1">This application may have been deleted.</p>
+                <button onClick={() => setView('list')} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                    Back to List
+                </button>
+            </div>
+        );
+    }
+
     if (!app) return null;
 
     return (
