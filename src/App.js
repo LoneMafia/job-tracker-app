@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile } from 'firebase/auth';
 import { getFirestore, collection, doc, addDoc, getDoc, setDoc, deleteDoc, onSnapshot, query, serverTimestamp, updateDoc, arrayUnion, arrayRemove, writeBatch } from 'firebase/firestore';
-// Note: Firebase Storage is no longer needed for this approach
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Sankey } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Sankey, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 // PapaParse is now loaded dynamically via a script tag
 
 // --- IMPORTANT: REPLACE THIS with the firebaseConfig object from your own Firebase project settings. ---
@@ -266,32 +265,134 @@ const AIAssistant = ({ app }) => {
 const Dashboard = ({ applications, statusHistory, isLoading }) => {
     if (isLoading) return <p className="text-center py-8">Loading dashboard...</p>;
     if (applications.length === 0) return <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-md"><h3 className="text-lg font-medium text-gray-600 dark:text-gray-300">No data for dashboard yet.</h3><p className="text-gray-500 dark:text-gray-400 mt-1">Add some applications to see your stats.</p></div>;
-    const totalApps = applications.length;
-    const interviewingApps = applications.filter(a => ['Interviewing', 'Offer', 'Aptitude Test(Online)', 'Aptitude Test(Offline)', 'FGD', 'Presentation'].includes(a.status)).length;
-    const offerApps = applications.filter(a => a.status === 'Offer').length;
-    const interviewRate = totalApps > 0 ? ((interviewingApps / totalApps) * 100).toFixed(1) : 0;
-    const offerRate = totalApps > 0 ? ((offerApps / totalApps) * 100).toFixed(1) : 0;
-    const sourceData = Object.values(applications.reduce((acc, app) => {
-        const source = app.source || 'Other';
-        if (!acc[source]) { acc[source] = { name: source, applications: 0, interviews: 0 }; }
-        acc[source].applications++;
-        if (['Interviewing', 'Offer', 'Aptitude Test(Online)', 'Aptitude Test(Offline)', 'FGD', 'Presentation'].includes(app.status)) { acc[source].interviews++; }
+
+    const statusOrder = ['Applied', 'Recruiter Screen', 'Aptitude Test(Online)', 'Aptitude Test(Offline)', 'FGD', 'Presentation', 'Interviewing', 'Offer'];
+    const positiveStatuses = new Set(statusOrder);
+    
+    // Sankey Diagram Logic
+    const nodes = statusOrder.map(name => ({ name }));
+    const rejectedNode = { name: 'Rejected' };
+    const ghostedNode = { name: 'Ghosted' };
+    nodes.push(rejectedNode, ghostedNode);
+
+    let links = new Map();
+
+    applications.forEach(app => {
+        const currentStatusIndex = statusOrder.indexOf(app.status);
+        
+        if (positiveStatuses.has(app.status)) {
+            // Create the success path up to the current status
+            for (let i = 0; i < currentStatusIndex; i++) {
+                const source = statusOrder[i];
+                const target = statusOrder[i+1];
+                const key = `${source}->${target}`;
+                links.set(key, (links.get(key) || 0) + 1);
+            }
+        } else { // Handle drop-offs (Rejected/Ghosted)
+            const lastPositiveStatus = statusHistory
+                .filter(h => h.appId === app.id && positiveStatuses.has(h.toStatus))
+                .sort((a,b) => b.timestamp - a.timestamp)[0]?.toStatus || 'Applied';
+            
+            const lastPositiveIndex = statusOrder.indexOf(lastPositiveStatus);
+            // Create success path up to the last positive status
+            for (let i = 0; i < lastPositiveIndex; i++) {
+                const source = statusOrder[i];
+                const target = statusOrder[i+1];
+                const key = `${source}->${target}`;
+                links.set(key, (links.get(key) || 0) + 1);
+            }
+            // Create the drop-off link
+            const key = `${lastPositiveStatus}->${app.status}`;
+            links.set(key, (links.get(key) || 0) + 1);
+        }
+    });
+
+    const sankeyData = {
+        nodes,
+        links: Array.from(links.entries()).map(([key, value]) => {
+            const [sourceName, targetName] = key.split('->');
+            return {
+                source: nodes.findIndex(n => n.name === sourceName),
+                target: nodes.findIndex(n => n.name === targetName),
+                value
+            };
+        })
+    };
+
+    // Status Breakdown Chart Logic
+    const statusCounts = applications.reduce((acc, app) => {
+        acc[app.status] = (acc[app.status] || 0) + 1;
         return acc;
-    }, {}));
-    const { nodes, links } = statusHistory.reduce((acc, history) => {
-        const { fromStatus, toStatus } = history;
-        if (!acc.nodeSet.has(fromStatus)) { acc.nodeSet.add(fromStatus); acc.nodes.push({ name: fromStatus }); }
-        if (!acc.nodeSet.has(toStatus)) { acc.nodeSet.add(toStatus); acc.nodes.push({ name: toStatus }); }
-        const linkKey = `${fromStatus}->${toStatus}`;
-        if (!acc.linkMap.has(linkKey)) { acc.linkMap.set(linkKey, { source: acc.nodes.findIndex(n => n.name === fromStatus), target: acc.nodes.findIndex(n => n.name === toStatus), value: 0 }); }
-        acc.linkMap.get(linkKey).value++;
+    }, {});
+    const pieData = Object.entries(statusCounts).map(([name, value]) => ({ name, value }));
+    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#d0ed57', '#a4de6c', '#8dd1e1', '#83a6ed'];
+
+    // Application Timeline Logic
+    const appsByWeek = applications.reduce((acc, app) => {
+        if (app.createdAt?.toDate) {
+            const date = app.createdAt.toDate();
+            const year = date.getFullYear();
+            const week = Math.floor((date - new Date(year, 0, 1)) / (1000 * 60 * 60 * 24 * 7));
+            const key = `${year}-W${week}`;
+            if (!acc[key]) acc[key] = { name: `Week ${week}`, count: 0, date: new Date(year, 0, week * 7) };
+            acc[key].count++;
+        }
         return acc;
-    }, { nodes: [], links: [], nodeSet: new Set(), linkMap: new Map() });
-    const sankeyData = { nodes, links: Array.from(links.values()) };
+    }, {});
+    
+    const timelineData = Object.values(appsByWeek)
+        .sort((a, b) => a.date - b.date)
+        .slice(-12); // Last 12 weeks
+
+    // Avg Time to First Response Logic
+    let totalDays = 0;
+    let respondedApps = 0;
+    statusHistory.forEach(h => {
+        if ((h.fromStatus === 'Applied' || h.fromStatus === 'Pending') && positiveStatuses.has(h.toStatus)) {
+            const app = applications.find(a => a.id === h.appId);
+            if (app?.createdAt?.toDate && h.timestamp?.toDate) {
+                const diffTime = Math.abs(h.timestamp.toDate() - app.createdAt.toDate());
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                totalDays += diffDays;
+                respondedApps++;
+            }
+        }
+    });
+    const avgResponseDays = respondedApps > 0 ? (totalDays / respondedApps).toFixed(1) : 'N/A';
+
     return (
         <div className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6"><div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center"><h3 className="text-gray-500 dark:text-gray-400 uppercase text-sm font-bold">Total Applications</h3><p className="text-4xl font-bold mt-2 dark:text-white">{totalApps}</p></div><div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center"><h3 className="text-gray-500 dark:text-gray-400 uppercase text-sm font-bold">Interview Stage Rate</h3><p className="text-4xl font-bold mt-2 dark:text-white">{interviewRate}%</p></div><div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center"><h3 className="text-gray-500 dark:text-gray-400 uppercase text-sm font-bold">Offer Rate</h3><p className="text-4xl font-bold mt-2 dark:text-white">{offerRate}%</p></div></div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8"><div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md"><h3 className="font-bold mb-4 dark:text-white">Source Effectiveness</h3><ResponsiveContainer width="100%" height={300}><BarChart data={sourceData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="name" /><YAxis /><Tooltip /><Legend /><Bar dataKey="applications" fill="#8884d8" name="Total Apps" /><Bar dataKey="interviews" fill="#82ca9d" name="Interviews" /></BarChart></ResponsiveContainer></div><div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md"><h3 className="font-bold mb-4 dark:text-white">Application Funnel</h3>{sankeyData.nodes.length > 0 && sankeyData.links.length > 0 ? (<ResponsiveContainer width="100%" height={300}><Sankey data={sankeyData} node={{stroke: '#777', strokeWidth: 1}} nodePadding={50} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}><Tooltip /></Sankey></ResponsiveContainer>) : <p className="text-gray-500 dark:text-gray-400 text-center pt-16">Not enough status history. Update job statuses to see the funnel.</p>}</div></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center"><h3 className="text-gray-500 dark:text-gray-400 uppercase text-sm font-bold">Total Applications</h3><p className="text-4xl font-bold mt-2 dark:text-white">{applications.length}</p></div>
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center"><h3 className="text-gray-500 dark:text-gray-400 uppercase text-sm font-bold">Interview Stage</h3><p className="text-4xl font-bold mt-2 dark:text-white">{applications.filter(a => positiveStatuses.has(a.status) && a.status !== 'Applied').length}</p></div>
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center"><h3 className="text-gray-500 dark:text-gray-400 uppercase text-sm font-bold">Offers</h3><p className="text-4xl font-bold mt-2 dark:text-white">{applications.filter(a => a.status === 'Offer').length}</p></div>
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center"><h3 className="text-gray-500 dark:text-gray-400 uppercase text-sm font-bold">Avg. Time to Respond</h3><p className="text-4xl font-bold mt-2 dark:text-white">{avgResponseDays} <span className="text-lg">days</span></p></div>
+            </div>
+             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md"><h3 className="font-bold mb-4 dark:text-white">Application Funnel</h3>{sankeyData.nodes.length > 0 && sankeyData.links.length > 0 ? (<ResponsiveContainer width="100%" height={400}><Sankey data={sankeyData} node={{stroke: '#777', strokeWidth: 1}} nodePadding={50} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}><Tooltip /></Sankey></ResponsiveContainer>) : <p className="text-gray-500 dark:text-gray-400 text-center pt-16">Not enough data for a funnel. Apply to some jobs!</p>}</div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md"><h3 className="font-bold mb-4 dark:text-white">Status Breakdown</h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                        <PieChart>
+                            <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="#8884d8" label>
+                                {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                            </Pie>
+                            <Tooltip />
+                        </PieChart>
+                    </ResponsiveContainer>
+                </div>
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md"><h3 className="font-bold mb-4 dark:text-white">Application Timeline (Last 90 Days)</h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                        <LineChart data={timelineData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="name" />
+                            <YAxis />
+                            <Tooltip />
+                            <Legend />
+                            <Line type="monotone" dataKey="count" stroke="#8884d8" name="Applications" />
+                        </LineChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
         </div>
     );
 };
@@ -878,13 +979,13 @@ export default function App() {
                 dataToSave.createdAt = editingApplication.createdAt || serverTimestamp();
                 await setDoc(docRef, dataToSave);
                 if (oldStatus && oldStatus !== appData.status) {
-                    await addDoc(collection(db, historyPath), { fromStatus: oldStatus, toStatus: appData.status, timestamp: serverTimestamp() });
+                    await addDoc(collection(db, historyPath), { fromStatus: oldStatus, toStatus: appData.status, timestamp: serverTimestamp(), appId: editingApplication.id });
                 }
             } else {
                 dataToSave.tasks = [];
                 dataToSave.createdAt = serverTimestamp();
-                await addDoc(collection(db, appsPath), dataToSave);
-                await addDoc(collection(db, historyPath), { fromStatus: 'Created', toStatus: appData.status, timestamp: serverTimestamp() });
+                const newDocRef = await addDoc(collection(db, appsPath), dataToSave);
+                await addDoc(collection(db, historyPath), { fromStatus: 'Created', toStatus: appData.status, timestamp: serverTimestamp(), appId: newDocRef.id });
             }
             closeModal();
         } catch (e) { setError("Save failed: " + e.message); }
@@ -910,7 +1011,7 @@ export default function App() {
             const newAppRef = doc(collection(db, appsPath));
             batch.set(newAppRef, { ...item, tasks: [], createdAt: serverTimestamp() });
             const newHistoryRef = doc(collection(db, historyPath));
-            batch.set(newHistoryRef, { fromStatus: 'Imported', toStatus: item.status, timestamp: serverTimestamp() });
+            batch.set(newHistoryRef, { fromStatus: 'Imported', toStatus: item.status, timestamp: serverTimestamp(), appId: newAppRef.id });
         });
         try {
             await batch.commit();
