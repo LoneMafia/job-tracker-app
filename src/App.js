@@ -7,12 +7,13 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 
 // --- IMPORTANT: REPLACE THIS with the firebaseConfig object from your own Firebase project settings. ---
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDGQozcym3Af40v8E8b2tSAjqph_2y455Y",
+  authDomain: "job-application-tracker-248a6.firebaseapp.com",
+  projectId: "job-application-tracker-248a6",
+  storageBucket: "job-application-tracker-248a6.firebasestorage.app",
+  messagingSenderId: "537204034923",
+  appId: "1:537204034923:web:b007972c8a980add72902e",
+  measurementId: "G-44GC43NFEB"
 };
 const appId = 'default-app-id'; // This can remain as is
 
