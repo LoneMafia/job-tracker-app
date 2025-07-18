@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, signInAnonymously, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { getFirestore, collection, doc, addDoc, getDoc, setDoc, deleteDoc, onSnapshot, query, serverTimestamp, updateDoc, arrayUnion, arrayRemove, writeBatch } from 'firebase/firestore';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Sankey } from 'recharts';
 // PapaParse is now loaded dynamically via a script tag
@@ -31,6 +31,7 @@ const BackIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w
 const CalendarIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>);
 const SparklesIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m1-12a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1h-6a1 1 0 01-1-1V6zM17.66 17.66l-1.42-1.42m1.42 0l-1.42 1.42m0-1.42l1.42 1.42m1.42-1.42l-1.42-1.42" /></svg>);
 const UploadIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>);
+const LogoutIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>);
 
 // ====================================================================================
 // --- FILE: src/components/ApplicationList.js ---
@@ -435,7 +436,8 @@ const ImportModal = ({ onImport, onClose }) => {
 
 export default function App() {
     const [db, setDb] = useState(null);
-    const [userId, setUserId] = useState(null);
+    const [auth, setAuth] = useState(null);
+    const [user, setUser] = useState(null);
     const [isAuthReady, setIsAuthReady] = useState(false);
     const [applications, setApplications] = useState([]);
     const [statusHistory, setStatusHistory] = useState([]);
@@ -476,10 +478,11 @@ export default function App() {
                 const authInstance = getAuth(app);
                 const dbInstance = getFirestore(app);
                 setDb(dbInstance);
-                onAuthStateChanged(authInstance, user => {
-                    if (user) setUserId(user.uid);
-                    else signInAnonymously(authInstance).catch(err => setError("Sign-in failed: " + err.message));
+                setAuth(authInstance);
+                onAuthStateChanged(authInstance, (user) => {
+                    setUser(user);
                     setIsAuthReady(true);
+                    setIsLoading(false);
                 });
             } else { setIsLoading(false); setError("Firebase config missing or invalid. Please update it in src/App.js."); }
         } catch (e) { setIsLoading(false); setError("DB connection failed: " + e.message); }
@@ -487,9 +490,13 @@ export default function App() {
 
     // Set up Firestore listeners
     useEffect(() => {
-        if (!isAuthReady || !db || !userId) return;
-        setIsLoading(true);
-        const appsPath = `artifacts/${appId}/users/${userId}/applications`;
+        if (!isAuthReady || !db || !user) {
+            setApplications([]);
+            setStatusHistory([]);
+            return;
+        };
+        
+        const appsPath = `artifacts/${appId}/users/${user.uid}/applications`;
         const qApps = query(collection(db, appsPath));
         const unsubApps = onSnapshot(qApps, snap => {
             const appsData = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -499,20 +506,20 @@ export default function App() {
             if (view !== 'detail') setIsLoading(false);
         }, err => { setError("Fetch failed."); setIsLoading(false); });
 
-        const historyPath = `artifacts/${appId}/users/${userId}/statusHistory`;
+        const historyPath = `artifacts/${appId}/users/${user.uid}/statusHistory`;
         const qHistory = query(collection(db, historyPath));
         const unsubHistory = onSnapshot(qHistory, snap => {
             setStatusHistory(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
         }, err => { setError("History fetch failed."); });
 
         return () => { unsubApps(); unsubHistory(); };
-    }, [isAuthReady, db, userId]);
+    }, [isAuthReady, db, user]);
 
     // --- Data Handlers ---
     const handleSaveApplication = async (appData) => {
-        if (!db || !userId) { setError("DB not ready."); return; }
-        const appsPath = `artifacts/${appId}/users/${userId}/applications`;
-        const historyPath = `artifacts/${appId}/users/${userId}/statusHistory`;
+        if (!db || !user) { setError("DB not ready."); return; }
+        const appsPath = `artifacts/${appId}/users/${user.uid}/applications`;
+        const historyPath = `artifacts/${appId}/users/${user.uid}/statusHistory`;
         try {
             const dataToSave = { ...appData };
             if (editingApplication) {
@@ -537,9 +544,9 @@ export default function App() {
 
     const requestDelete = (id) => { setItemToDelete(id); setShowDeleteConfirm(true); };
     const confirmDelete = async () => {
-        if (!db || !userId || !itemToDelete) return;
+        if (!db || !user || !itemToDelete) return;
         try {
-            await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/applications`, itemToDelete));
+            await deleteDoc(doc(db, `artifacts/${appId}/users/${user.uid}/applications`, itemToDelete));
             if (selectedAppId === itemToDelete) setView('list');
             setShowDeleteConfirm(false);
             setItemToDelete(null);
@@ -547,13 +554,13 @@ export default function App() {
     };
 
     const handleBulkImport = async (data) => {
-        if (!db || !userId) {
+        if (!db || !user) {
             setError("Database not connected. Cannot import.");
             return;
         }
         const batch = writeBatch(db);
-        const appsPath = `artifacts/${appId}/users/${userId}/applications`;
-        const historyPath = `artifacts/${appId}/users/${userId}/statusHistory`;
+        const appsPath = `artifacts/${appId}/users/${user.uid}/applications`;
+        const historyPath = `artifacts/${appId}/users/${user.uid}/statusHistory`;
 
         data.forEach(item => {
             const newAppRef = doc(collection(db, appsPath));
@@ -575,12 +582,23 @@ export default function App() {
     const openModal = (app = null) => { setEditingApplication(app); setIsModalOpen(true); };
     const closeModal = () => { setIsModalOpen(false); setEditingApplication(null); };
     const handleSetView = (viewName, appId = null) => { setSelectedAppId(appId); setView(viewName); }
+    const handleSignOut = () => {
+        signOut(auth).catch(err => setError("Sign out failed: " + err.message));
+    }
+
+    if (!isAuthReady) {
+        return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    }
+
+    if (!user) {
+        return <AuthScreen auth={auth} setError={setError} error={error} />;
+    }
 
     const CurrentView = () => {
         if (isLoading && view !== 'detail') return <p className="text-center py-8">Loading...</p>;
         switch (view) {
             case 'dashboard': return <Dashboard applications={applications} statusHistory={statusHistory} isLoading={isLoading} />;
-            case 'detail': return <ApplicationDetail appId={selectedAppId} db={db} userId={userId} setView={handleSetView} onEdit={openModal} onDelete={requestDelete} />;
+            case 'detail': return <ApplicationDetail appId={selectedAppId} db={db} userId={user.uid} setView={handleSetView} onEdit={openModal} onDelete={requestDelete} />;
             default: return <ApplicationList applications={applications} isLoading={isLoading} onSelectApp={id => handleSetView('detail', id)} onEdit={openModal} onDelete={requestDelete} />;
         }
     };
@@ -597,6 +615,9 @@ export default function App() {
                             </button>
                             <button onClick={() => openModal()} className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow transition-transform transform hover:scale-105">
                                 <PlusIcon /> <span className="ml-2 hidden sm:inline">Add Application</span>
+                            </button>
+                            <button onClick={handleSignOut} className="flex items-center justify-center bg-red-500 hover:bg-red-600 text-white font-bold p-2 rounded-full shadow transition-transform transform hover:scale-105" title="Sign Out">
+                                <LogoutIcon />
                             </button>
                         </div>
                     </div>
@@ -616,3 +637,76 @@ export default function App() {
         </div>
     );
 }
+
+// ====================================================================================
+// --- FILE: src/components/AuthScreen.js ---
+// ====================================================================================
+
+const AuthScreen = ({ auth, error, setError }) => {
+    const [isLogin, setIsLogin] = useState(true);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
+        try {
+            if (isLogin) {
+                await signInWithEmailAndPassword(auth, email, password);
+            } else {
+                await createUserWithEmailAndPassword(auth, email, password);
+            }
+        } catch (err) {
+            setError(err.message);
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">
+            <div className="max-w-md w-full mx-auto">
+                <div className="text-center">
+                    <h2 className="text-3xl font-extrabold text-gray-900">
+                        {isLogin ? 'Sign in to your account' : 'Create a new account'}
+                    </h2>
+                </div>
+                <div className="mt-8 bg-white py-8 px-4 shadow-xl sm:rounded-lg sm:px-10">
+                    <form className="space-y-6" onSubmit={handleSubmit}>
+                        <div>
+                            <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email address</label>
+                            <div className="mt-1">
+                                <input id="email" name="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"/>
+                            </div>
+                        </div>
+                        <div>
+                            <label htmlFor="password"className="block text-sm font-medium text-gray-700">Password</label>
+                            <div className="mt-1">
+                                <input id="password" name="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"/>
+                            </div>
+                        </div>
+                        {error && <p className="text-red-500 text-sm">{error}</p>}
+                        <div>
+                            <button type="submit" className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                {isLogin ? 'Sign in' : 'Sign up'}
+                            </button>
+                        </div>
+                    </form>
+                    <div className="mt-6">
+                        <div className="relative">
+                            <div className="absolute inset-0 flex items-center">
+                                <div className="w-full border-t border-gray-300" />
+                            </div>
+                            <div className="relative flex justify-center text-sm">
+                                <span className="px-2 bg-white text-gray-500">Or</span>
+                            </div>
+                        </div>
+                        <div className="mt-6">
+                            <button onClick={() => setIsLogin(!isLogin)} className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                                {isLogin ? 'Create a new account' : 'Sign in to an existing account'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
