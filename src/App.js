@@ -21,18 +21,18 @@ const appId = 'default-app-id'; // This can remain as is
 // --- FILE: src/components/Icons.js ---
 // ====================================================================================
 
-const PlusIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>);
+const PlusIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>);
 const EditIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" /></svg>);
 const DeleteIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clipRule="evenodd" /></svg>);
 const AlertIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>);
-const ChartIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" /></svg>);
-const ListIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" /></svg>);
+const ChartIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>);
+const ListIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>);
 const BackIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>);
 const CalendarIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>);
 const SparklesIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m1-12a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1h-6a1 1 0 01-1-1V6zM17.66 17.66l-1.42-1.42m1.42 0l-1.42 1.42m0-1.42l1.42 1.42m1.42-1.42l-1.42-1.42" /></svg>);
 const UploadIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>);
 const LogoutIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>);
-const SettingsIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>);
+const SettingsIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>);
 
 // ====================================================================================
 // --- FILE: src/components/ApplicationList.js ---
@@ -314,10 +314,11 @@ const ApplicationForm = ({ application, onSave, onClose, customSources }) => {
     const handleChange = (e) => { const { name, value } = e.target; setFormData(prev => ({ ...prev, [name]: value })); };
     const handleSubmit = (e) => { e.preventDefault(); const deadlineISO = formData.deadline ? new Date(formData.deadline).toISOString() : ''; const followUpISO = formData.followUpDate ? new Date(formData.followUpDate).toISOString() : ''; onSave({ ...formData, deadline: deadlineISO, followUpDate: followUpISO }); };
     const statusOptions = ['Pending', 'Applied', 'Recruiter Screen', 'Aptitude Test(Online)', 'Aptitude Test(Offline)', 'FGD', 'Presentation', 'Interviewing', 'Offer', 'Rejected', 'Ghosted'];
-    const sourceOptions = ['LinkedIn', 'Company Website', 'Referral', 'Job Board', 'Recruiter', ...customSources, 'Other'];
+    const defaultSources = ['LinkedIn', 'Company Website', 'Referral', 'Job Board', 'Recruiter', 'Other'];
+    const sourceOptions = [...new Set([...defaultSources, ...customSources])];
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4"><div ref={modalRef} className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-3xl max-h-full overflow-y-auto"><form onSubmit={handleSubmit}><div className="p-6"><h2 className="text-2xl font-bold mb-6 dark:text-white">{application ? 'Edit Application' : 'Add New Application'}</h2><div className="grid grid-cols-1 md:grid-cols-2 gap-6"><div><label htmlFor="company" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Company</label><input type="text" name="company" id="company" value={formData.company} onChange={handleChange} required className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div><div><label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Job Title</label><input type="text" name="title" id="title" value={formData.title} onChange={handleChange} required className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div><div><label htmlFor="status" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label><select name="status" id="status" value={formData.status} onChange={handleChange} className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">{statusOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}</select></div><div><label htmlFor="deadline" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Application Deadline</label><input type="date" name="deadline" id="deadline" value={formData.deadline} onChange={handleChange} className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div><div><label htmlFor="followUpDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Follow-up On</label><input type="date" name="followUpDate" id="followUpDate" value={formData.followUpDate} onChange={handleChange} className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div><div><label htmlFor="source" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Source</label><select name="source" id="source" value={formData.source} onChange={handleChange} className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">{[...new Set(sourceOptions)].map(opt => <option key={opt} value={opt}>{opt}</option>)}</select></div><div className="md:col-span-2"><label htmlFor="jobLink" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Job Posting Link</label><input type="url" name="jobLink" id="jobLink" value={formData.jobLink} onChange={handleChange} className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div><div><label htmlFor="contactName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Name</label><input type="text" name="contactName" id="contactName" value={formData.contactName} onChange={handleChange} className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div><div><label htmlFor="contactEmail" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Email</label><input type="email" name="contactEmail" id="contactEmail" value={formData.contactEmail} onChange={handleChange} className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div><div className="md:col-span-2"><label htmlFor="resumeVersion" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Resume/Cover Letter Version</label><input type="text" name="resumeVersion" id="resumeVersion" value={formData.resumeVersion} onChange={handleChange} className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div><div className="md:col-span-2"><label htmlFor="notes" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label><textarea name="notes" id="notes" rows="3" value={formData.notes} onChange={handleChange} className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea></div><div className="md:col-span-2"><label htmlFor="jobDescription" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Job Description</label><textarea name="jobDescription" id="jobDescription" rows="5" value={formData.jobDescription} onChange={handleChange} className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea></div><div className="md:col-span-2"><label htmlFor="resumeText" className="block text-sm font-medium text-gray-700 dark:text-gray-300">My Master Resume</label><textarea name="resumeText" id="resumeText" rows="5" value={formData.resumeText} onChange={handleChange} className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Paste your master resume here for AI analysis..."></textarea></div></div></div><div className="bg-gray-50 dark:bg-gray-900 px-6 py-4 flex justify-end space-x-3"><button type="button" onClick={onClose} className="bg-white dark:bg-gray-700 py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600">Cancel</button><button type="submit" className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">Save Application</button></div></form></div></div>
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4"><div ref={modalRef} className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-3xl max-h-full overflow-y-auto"><form onSubmit={handleSubmit}><div className="p-6"><h2 className="text-2xl font-bold mb-6 dark:text-white">{application ? 'Edit Application' : 'Add New Application'}</h2><div className="grid grid-cols-1 md:grid-cols-2 gap-6"><div><label htmlFor="company" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Company</label><input type="text" name="company" id="company" value={formData.company} onChange={handleChange} required className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div><div><label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Job Title</label><input type="text" name="title" id="title" value={formData.title} onChange={handleChange} required className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div><div><label htmlFor="status" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label><select name="status" id="status" value={formData.status} onChange={handleChange} className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">{statusOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}</select></div><div><label htmlFor="deadline" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Application Deadline</label><input type="date" name="deadline" id="deadline" value={formData.deadline} onChange={handleChange} className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div><div><label htmlFor="followUpDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Follow-up On</label><input type="date" name="followUpDate" id="followUpDate" value={formData.followUpDate} onChange={handleChange} className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div><div><label htmlFor="source" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Source</label><select name="source" id="source" value={formData.source} onChange={handleChange} className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">{sourceOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}</select></div><div className="md:col-span-2"><label htmlFor="jobLink" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Job Posting Link</label><input type="url" name="jobLink" id="jobLink" value={formData.jobLink} onChange={handleChange} className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div><div><label htmlFor="contactName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Name</label><input type="text" name="contactName" id="contactName" value={formData.contactName} onChange={handleChange} className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div><div><label htmlFor="contactEmail" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Email</label><input type="email" name="contactEmail" id="contactEmail" value={formData.contactEmail} onChange={handleChange} className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div><div className="md:col-span-2"><label htmlFor="resumeVersion" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Resume/Cover Letter Version</label><input type="text" name="resumeVersion" id="resumeVersion" value={formData.resumeVersion} onChange={handleChange} className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/></div><div className="md:col-span-2"><label htmlFor="notes" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label><textarea name="notes" id="notes" rows="3" value={formData.notes} onChange={handleChange} className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea></div><div className="md:col-span-2"><label htmlFor="jobDescription" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Job Description</label><textarea name="jobDescription" id="jobDescription" rows="5" value={formData.jobDescription} onChange={handleChange} className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea></div><div className="md:col-span-2"><label htmlFor="resumeText" className="block text-sm font-medium text-gray-700 dark:text-gray-300">My Master Resume</label><textarea name="resumeText" id="resumeText" rows="5" value={formData.resumeText} onChange={handleChange} className="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Paste your master resume here for AI analysis..."></textarea></div></div></div><div className="bg-gray-50 dark:bg-gray-900 px-6 py-4 flex justify-end space-x-3"><button type="button" onClick={onClose} className="bg-white dark:bg-gray-700 py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600">Cancel</button><button type="submit" className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">Save Application</button></div></form></div></div>
     );
 };
 
@@ -522,6 +523,7 @@ const AuthScreen = ({ auth, error, setError }) => {
 
 const Settings = ({ db, userId, userSettings, setUserSettings }) => {
     const [newSource, setNewSource] = useState('');
+    const defaultSources = ['LinkedIn', 'Company Website', 'Referral', 'Job Board', 'Recruiter', 'Other'];
 
     const handleThemeChange = async (theme) => {
         const newSettings = { ...userSettings, theme };
@@ -531,11 +533,12 @@ const Settings = ({ db, userId, userSettings, setUserSettings }) => {
 
     const handleAddSource = async (e) => {
         e.preventDefault();
-        if (newSource.trim() === '' || userSettings.customSources.includes(newSource.trim())) {
+        const sourceToAdd = newSource.trim();
+        if (sourceToAdd === '' || userSettings.customSources.includes(sourceToAdd) || defaultSources.includes(sourceToAdd)) {
             setNewSource('');
             return;
         }
-        const newSources = [...userSettings.customSources, newSource.trim()];
+        const newSources = [...userSettings.customSources, sourceToAdd];
         const newSettings = { ...userSettings, customSources: newSources };
         setUserSettings(newSettings);
         await setDoc(doc(db, `artifacts/${appId}/users/${userId}/settings/user`), newSettings);
@@ -550,12 +553,12 @@ const Settings = ({ db, userId, userSettings, setUserSettings }) => {
     };
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 max-w-4xl mx-auto">
             <div className="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6">
-                <h2 className="text-2xl font-bold mb-4 dark:text-white">Settings</h2>
+                <h2 className="text-2xl font-bold mb-6 dark:text-white">Settings</h2>
                 
                 {/* Theme Settings */}
-                <div className="mb-6">
+                <div className="mb-8">
                     <h3 className="text-lg font-medium mb-2 dark:text-gray-200">Theme</h3>
                     <div className="flex space-x-4">
                         <button onClick={() => handleThemeChange('light')} className={`px-4 py-2 rounded-md ${userSettings.theme === 'light' ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}>Light</button>
@@ -565,25 +568,128 @@ const Settings = ({ db, userId, userSettings, setUserSettings }) => {
 
                 {/* Custom Sources Settings */}
                 <div>
-                    <h3 className="text-lg font-medium mb-2 dark:text-gray-200">Custom Job Sources</h3>
-                    <form onSubmit={handleAddSource} className="flex space-x-2 mb-4">
-                        <input type="text" value={newSource} onChange={e => setNewSource(e.target.value)} placeholder="Add a new source..." className="flex-grow border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm sm:text-sm"/>
-                        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Add</button>
-                    </form>
-                    <ul className="space-y-2">
-                        {userSettings.customSources?.map(source => (
-                            <li key={source} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-md">
-                                <span className="dark:text-gray-200">{source}</span>
-                                <button onClick={() => handleDeleteSource(source)} className="text-red-500 hover:text-red-700 p-1"><DeleteIcon/></button>
-                            </li>
-                        ))}
-                    </ul>
+                    <h3 className="text-lg font-medium mb-4 dark:text-gray-200">Job Sources</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <h4 className="font-semibold mb-2 dark:text-gray-300">Default Sources</h4>
+                            <ul className="space-y-2">
+                                {defaultSources.map(source => (
+                                    <li key={source} className="flex items-center justify-between p-2 bg-gray-100 dark:bg-gray-700 rounded-md">
+                                        <span className="text-gray-500 dark:text-gray-400">{source}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 className="font-semibold mb-2 dark:text-gray-300">Your Custom Sources</h4>
+                            <form onSubmit={handleAddSource} className="flex space-x-2 mb-4">
+                                <input type="text" value={newSource} onChange={e => setNewSource(e.target.value)} placeholder="Add a new source..." className="flex-grow border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm sm:text-sm"/>
+                                <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Add</button>
+                            </form>
+                            <ul className="space-y-2">
+                                {userSettings.customSources?.map(source => (
+                                    <li key={source} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-md">
+                                        <span className="dark:text-gray-200">{source}</span>
+                                        <button onClick={() => handleDeleteSource(source)} className="text-red-500 hover:text-red-700 p-1"><DeleteIcon/></button>
+                                    </li>
+                                ))}
+                                {(!userSettings.customSources || userSettings.customSources.length === 0) && <p className="text-sm text-gray-400">No custom sources added yet.</p>}
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     );
 };
 
+// ====================================================================================
+// --- FILE: src/components/Sidebar.js ---
+// ====================================================================================
+
+const Sidebar = ({ user, view, setView, onSignOut, onOpenProfile }) => {
+    const getInitials = (name) => {
+        if (!name) return '?';
+        const names = name.split(' ');
+        if (names.length > 1) {
+            return names[0][0] + names[names.length - 1][0];
+        }
+        return name[0];
+    };
+
+    return (
+        <div className="hidden lg:flex flex-col w-64 bg-white dark:bg-gray-800 border-r dark:border-gray-700 shadow-lg">
+            <div className="flex flex-col p-4 border-b dark:border-gray-700">
+                <div className="flex items-center space-x-3 mb-3">
+                    <div className="h-12 w-12 flex-shrink-0 rounded-full bg-blue-600 text-white flex items-center justify-center text-xl font-bold">
+                        {getInitials(user.displayName)}
+                    </div>
+                    <div>
+                        <p className="font-semibold text-gray-800 dark:text-white truncate">{user.displayName || 'New User'}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
+                    </div>
+                </div>
+                <button onClick={onOpenProfile} className="text-xs text-blue-600 dark:text-blue-400 hover:underline text-left">Edit Profile</button>
+            </div>
+            <nav className="flex-1 px-2 py-4 space-y-1">
+                <button onClick={() => setView('list')} className={`w-full flex items-center px-2 py-2 text-sm font-medium rounded-md ${view === 'list' ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}><ListIcon /> All Applications</button>
+                <button onClick={() => setView('dashboard')} className={`w-full flex items-center px-2 py-2 text-sm font-medium rounded-md ${view === 'dashboard' ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}><ChartIcon /> Dashboard</button>
+                <button onClick={() => setView('settings')} className={`w-full flex items-center px-2 py-2 text-sm font-medium rounded-md ${view === 'settings' ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}><SettingsIcon /> Settings</button>
+            </nav>
+            <div className="p-4 border-t dark:border-gray-700">
+                <button onClick={onSignOut} className="w-full flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <LogoutIcon />
+                    <span className="ml-2">Sign Out</span>
+                </button>
+            </div>
+        </div>
+    );
+};
+
+// ====================================================================================
+// --- FILE: src/components/ProfileModal.js ---
+// ====================================================================================
+
+const ProfileModal = ({ user, auth, onClose, setError }) => {
+    const [name, setName] = useState(user.displayName || '');
+
+    const handleSave = async (e) => {
+        e.preventDefault();
+        if (name.trim() === '') {
+            setError("Name cannot be empty.");
+            return;
+        }
+        try {
+            await updateProfile(auth.currentUser, { displayName: name.trim() });
+            onClose();
+        } catch (err) {
+            setError("Failed to update profile: " + err.message);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md">
+                <form onSubmit={handleSave}>
+                    <div className="p-6">
+                        <h3 className="text-lg font-bold mb-4 dark:text-white">Edit Profile</h3>
+                        <div>
+                            <label htmlFor="profileName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
+                            <div className="mt-1">
+                                <input id="profileName" name="profileName" type="text" required value={name} onChange={(e) => setName(e.target.value)} className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"/>
+                            </div>
+                        </div>
+                        <p className="text-xs text-gray-400 mt-2">Profile picture uploads are coming soon!</p>
+                    </div>
+                    <div className="bg-gray-50 dark:bg-gray-900 px-6 py-4 flex justify-end space-x-3">
+                        <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">Cancel</button>
+                        <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
 
 // ====================================================================================
 // --- FILE: src/App.js ---
@@ -600,6 +706,7 @@ export default function App() {
     const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [editingApplication, setEditingApplication] = useState(null);
     const [error, setError] = useState(null);
     const [view, setView] = useState('list'); // 'list', 'dashboard', 'detail', 'settings'
@@ -769,7 +876,7 @@ export default function App() {
         return <AuthScreen auth={auth} setError={setError} error={error} />;
     }
 
-    const CurrentView = () => {
+    const MainContent = () => {
         if (isLoading && view !== 'detail') return <p className="text-center py-8 dark:text-gray-300">Loading...</p>;
         switch (view) {
             case 'dashboard': return <Dashboard applications={applications} statusHistory={statusHistory} isLoading={isLoading} />;
@@ -780,40 +887,41 @@ export default function App() {
     };
 
     return (
-        <div className="bg-gray-100 dark:bg-gray-900 min-h-screen font-sans text-gray-800 dark:text-gray-200">
-            <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-20">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center py-4">
-                        <div>
+        <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900 font-sans text-gray-800 dark:text-gray-200">
+            <Sidebar user={user} view={view} setView={handleSetView} onSignOut={handleSignOut} onOpenProfile={() => setIsProfileModalOpen(true)} />
+            <div className="flex-1 flex flex-col">
+                <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-10 lg:hidden">
+                    {/* Mobile Header */}
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="flex justify-between items-center py-4">
                             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Job Tracker</h1>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Hi {user.displayName || 'there'}, {greeting}</p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <button onClick={() => setIsImportModalOpen(true)} disabled={!isPapaReady} className="flex items-center justify-center bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow transition-transform transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed">
-                                <UploadIcon/> <span className="ml-2 hidden sm:inline">Import CSV</span>
-                            </button>
-                            <button onClick={() => openModal()} className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow transition-transform transform hover:scale-105">
-                                <PlusIcon /> <span className="ml-2 hidden sm:inline">Add Application</span>
-                            </button>
-                            <button onClick={handleSignOut} className="flex items-center justify-center bg-red-500 hover:bg-red-600 text-white font-bold p-2 rounded-full shadow transition-transform transform hover:scale-105" title="Sign Out">
-                                <LogoutIcon />
-                            </button>
+                            <button onClick={handleSignOut} className="p-2 text-gray-500"><LogoutIcon /></button>
                         </div>
                     </div>
-                    <nav className="flex space-x-4">
-                        <button onClick={() => handleSetView('list')} className={`flex items-center py-2 px-3 font-medium rounded-t-lg ${view === 'list' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400'}`}><ListIcon /> All Applications</button>
-                        <button onClick={() => handleSetView('dashboard')} className={`flex items-center py-2 px-3 font-medium rounded-t-lg ${view === 'dashboard' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400'}`}><ChartIcon /> Dashboard</button>
-                        <button onClick={() => handleSetView('settings')} className={`flex items-center py-2 px-3 font-medium rounded-t-lg ${view === 'settings' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400'}`}><SettingsIcon /> Settings</button>
-                    </nav>
-                </div>
-            </header>
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {error && <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-md" role="alert"><p>{error}</p></div>}
-                <CurrentView />
-            </main>
+                </header>
+                <main className="flex-1 p-4 sm:p-6 lg:p-8">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="mb-6">
+                            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Hi {user.displayName || 'there'},</h1>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">{greeting}</p>
+                        </div>
+                        <div className="flex justify-end mb-4">
+                             <button onClick={() => setIsImportModalOpen(true)} disabled={!isPapaReady} className="flex items-center justify-center bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg shadow text-sm mr-2 transition-transform transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                                <UploadIcon/> <span className="ml-2 hidden sm:inline">Import CSV</span>
+                            </button>
+                            <button onClick={() => openModal()} className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded-lg shadow text-sm transition-transform transform hover:scale-105">
+                                <PlusIcon /> <span className="ml-2 hidden sm:inline">Add Application</span>
+                            </button>
+                        </div>
+                        {error && <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-md" role="alert"><p>{error}</p></div>}
+                        <MainContent />
+                    </div>
+                </main>
+            </div>
             {isModalOpen && <ApplicationForm application={editingApplication} onSave={handleSaveApplication} onClose={closeModal} customSources={userSettings.customSources} />}
             {isImportModalOpen && <ImportModal onImport={handleBulkImport} onClose={() => setIsImportModalOpen(false)} />}
             {showDeleteConfirm && <ConfirmDeleteModal onConfirm={confirmDelete} onCancel={() => setShowDeleteConfirm(false)} />}
+            {isProfileModalOpen && <ProfileModal user={user} auth={auth} onClose={() => setIsProfileModalOpen(false)} setError={setError} />}
         </div>
     );
 }
