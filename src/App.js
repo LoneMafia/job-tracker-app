@@ -266,135 +266,139 @@ const Dashboard = ({ applications, statusHistory, isLoading }) => {
     if (isLoading) return <p className="text-center py-8">Loading dashboard...</p>;
     if (applications.length === 0) return <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-md"><h3 className="text-lg font-medium text-gray-600 dark:text-gray-300">No data for dashboard yet.</h3><p className="text-gray-500 dark:text-gray-400 mt-1">Add some applications to see your stats.</p></div>;
 
-    const statusOrder = ['Applied', 'Recruiter Screen', 'Aptitude Test(Online)', 'Aptitude Test(Offline)', 'FGD', 'Presentation', 'Interviewing', 'Offer'];
-    const positiveStatuses = new Set(statusOrder);
-    
-    // Sankey Diagram Logic
-    const nodes = statusOrder.map(name => ({ name }));
-    const rejectedNode = { name: 'Rejected' };
-    const ghostedNode = { name: 'Ghosted' };
-    nodes.push(rejectedNode, ghostedNode);
-
-    let links = new Map();
-
-    applications.forEach(app => {
-        const currentStatusIndex = statusOrder.indexOf(app.status);
+    try {
+        const statusOrder = ['Applied', 'Recruiter Screen', 'Aptitude Test(Online)', 'Aptitude Test(Offline)', 'FGD', 'Presentation', 'Interviewing', 'Offer'];
+        const positiveStatuses = new Set(statusOrder);
         
-        if (positiveStatuses.has(app.status)) {
-            // Create the success path up to the current status
-            for (let i = 0; i < currentStatusIndex; i++) {
-                const source = statusOrder[i];
-                const target = statusOrder[i+1];
-                const key = `${source}->${target}`;
-                links.set(key, (links.get(key) || 0) + 1);
-            }
-        } else { // Handle drop-offs (Rejected/Ghosted)
-            const lastPositiveStatus = statusHistory
-                .filter(h => h.appId === app.id && positiveStatuses.has(h.toStatus))
-                .sort((a,b) => b.timestamp - a.timestamp)[0]?.toStatus || 'Applied';
+        // Sankey Diagram Logic
+        const nodes = statusOrder.map(name => ({ name }));
+        nodes.push({ name: 'Rejected' }, { name: 'Ghosted' });
+
+        let links = new Map();
+
+        applications.forEach(app => {
+            const currentStatusIndex = statusOrder.indexOf(app.status);
             
-            const lastPositiveIndex = statusOrder.indexOf(lastPositiveStatus);
-            // Create success path up to the last positive status
-            for (let i = 0; i < lastPositiveIndex; i++) {
-                const source = statusOrder[i];
-                const target = statusOrder[i+1];
-                const key = `${source}->${target}`;
+            if (positiveStatuses.has(app.status)) {
+                for (let i = 0; i < currentStatusIndex; i++) {
+                    const source = statusOrder[i];
+                    const target = statusOrder[i+1];
+                    const key = `${source}->${target}`;
+                    links.set(key, (links.get(key) || 0) + 1);
+                }
+            } else { 
+                const relevantHistory = statusHistory
+                    .filter(h => h.appId === app.id && positiveStatuses.has(h.toStatus))
+                    .sort((a,b) => (b.timestamp?.toMillis() || 0) - (a.timestamp?.toMillis() || 0));
+                
+                const lastPositiveStatus = relevantHistory[0]?.toStatus || 'Applied';
+                
+                const lastPositiveIndex = statusOrder.indexOf(lastPositiveStatus);
+                for (let i = 0; i < lastPositiveIndex; i++) {
+                    const source = statusOrder[i];
+                    const target = statusOrder[i+1];
+                    const key = `${source}->${target}`;
+                    links.set(key, (links.get(key) || 0) + 1);
+                }
+                const key = `${lastPositiveStatus}->${app.status}`;
                 links.set(key, (links.get(key) || 0) + 1);
             }
-            // Create the drop-off link
-            const key = `${lastPositiveStatus}->${app.status}`;
-            links.set(key, (links.get(key) || 0) + 1);
-        }
-    });
+        });
 
-    const sankeyData = {
-        nodes,
-        links: Array.from(links.entries()).map(([key, value]) => {
-            const [sourceName, targetName] = key.split('->');
-            return {
-                source: nodes.findIndex(n => n.name === sourceName),
-                target: nodes.findIndex(n => n.name === targetName),
-                value
-            };
-        })
-    };
+        const sankeyData = {
+            nodes,
+            links: Array.from(links.entries()).map(([key, value]) => {
+                const [sourceName, targetName] = key.split('->');
+                return {
+                    source: nodes.findIndex(n => n.name === sourceName),
+                    target: nodes.findIndex(n => n.name === targetName),
+                    value
+                };
+            }).filter(link => link.source !== -1 && link.target !== -1) // Ensure nodes exist
+        };
 
-    // Status Breakdown Chart Logic
-    const statusCounts = applications.reduce((acc, app) => {
-        acc[app.status] = (acc[app.status] || 0) + 1;
-        return acc;
-    }, {});
-    const pieData = Object.entries(statusCounts).map(([name, value]) => ({ name, value }));
-    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#d0ed57', '#a4de6c', '#8dd1e1', '#83a6ed'];
+        // Status Breakdown Chart Logic
+        const statusCounts = applications.reduce((acc, app) => {
+            acc[app.status] = (acc[app.status] || 0) + 1;
+            return acc;
+        }, {});
+        const pieData = Object.entries(statusCounts).map(([name, value]) => ({ name, value }));
+        const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#d0ed57', '#a4de6c', '#8dd1e1', '#83a6ed'];
 
-    // Application Timeline Logic
-    const appsByWeek = applications.reduce((acc, app) => {
-        if (app.createdAt?.toDate) {
-            const date = app.createdAt.toDate();
-            const year = date.getFullYear();
-            const week = Math.floor((date - new Date(year, 0, 1)) / (1000 * 60 * 60 * 24 * 7));
-            const key = `${year}-W${week}`;
-            if (!acc[key]) acc[key] = { name: `Week ${week}`, count: 0, date: new Date(year, 0, week * 7) };
-            acc[key].count++;
-        }
-        return acc;
-    }, {});
-    
-    const timelineData = Object.values(appsByWeek)
-        .sort((a, b) => a.date - b.date)
-        .slice(-12); // Last 12 weeks
-
-    // Avg Time to First Response Logic
-    let totalDays = 0;
-    let respondedApps = 0;
-    statusHistory.forEach(h => {
-        if ((h.fromStatus === 'Applied' || h.fromStatus === 'Pending') && positiveStatuses.has(h.toStatus)) {
-            const app = applications.find(a => a.id === h.appId);
-            if (app?.createdAt?.toDate && h.timestamp?.toDate) {
-                const diffTime = Math.abs(h.timestamp.toDate() - app.createdAt.toDate());
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                totalDays += diffDays;
-                respondedApps++;
+        // Application Timeline Logic
+        const appsByWeek = applications.reduce((acc, app) => {
+            if (app.createdAt?.toDate) {
+                const date = app.createdAt.toDate();
+                const year = date.getFullYear();
+                const week = Math.floor((date - new Date(year, 0, 1)) / (1000 * 60 * 60 * 24 * 7));
+                const key = `${year}-W${week}`;
+                if (!acc[key]) acc[key] = { name: `Week ${week}`, count: 0, date: new Date(year, 0, week * 7) };
+                acc[key].count++;
             }
-        }
-    });
-    const avgResponseDays = respondedApps > 0 ? (totalDays / respondedApps).toFixed(1) : 'N/A';
+            return acc;
+        }, {});
+        
+        const timelineData = Object.values(appsByWeek)
+            .sort((a, b) => a.date - b.date)
+            .slice(-12); // Last 12 weeks
 
-    return (
-        <div className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center"><h3 className="text-gray-500 dark:text-gray-400 uppercase text-sm font-bold">Total Applications</h3><p className="text-4xl font-bold mt-2 dark:text-white">{applications.length}</p></div>
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center"><h3 className="text-gray-500 dark:text-gray-400 uppercase text-sm font-bold">Interview Stage</h3><p className="text-4xl font-bold mt-2 dark:text-white">{applications.filter(a => positiveStatuses.has(a.status) && a.status !== 'Applied').length}</p></div>
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center"><h3 className="text-gray-500 dark:text-gray-400 uppercase text-sm font-bold">Offers</h3><p className="text-4xl font-bold mt-2 dark:text-white">{applications.filter(a => a.status === 'Offer').length}</p></div>
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center"><h3 className="text-gray-500 dark:text-gray-400 uppercase text-sm font-bold">Avg. Time to Respond</h3><p className="text-4xl font-bold mt-2 dark:text-white">{avgResponseDays} <span className="text-lg">days</span></p></div>
-            </div>
-             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md"><h3 className="font-bold mb-4 dark:text-white">Application Funnel</h3>{sankeyData.nodes.length > 0 && sankeyData.links.length > 0 ? (<ResponsiveContainer width="100%" height={400}><Sankey data={sankeyData} node={{stroke: '#777', strokeWidth: 1}} nodePadding={50} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}><Tooltip /></Sankey></ResponsiveContainer>) : <p className="text-gray-500 dark:text-gray-400 text-center pt-16">Not enough data for a funnel. Apply to some jobs!</p>}</div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md"><h3 className="font-bold mb-4 dark:text-white">Status Breakdown</h3>
-                    <ResponsiveContainer width="100%" height={300}>
-                        <PieChart>
-                            <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="#8884d8" label>
-                                {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
-                            </Pie>
-                            <Tooltip />
-                        </PieChart>
-                    </ResponsiveContainer>
+        // Avg Time to First Response Logic
+        let totalDays = 0;
+        let respondedAppsCount = 0;
+        const respondedAppIds = new Set();
+        statusHistory.forEach(h => {
+            if (!respondedAppIds.has(h.appId) && (h.fromStatus === 'Applied' || h.fromStatus === 'Pending') && positiveStatuses.has(h.toStatus)) {
+                const app = applications.find(a => a.id === h.appId);
+                if (app?.createdAt?.toDate && h.timestamp?.toDate) {
+                    const diffTime = Math.abs(h.timestamp.toDate() - app.createdAt.toDate());
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    totalDays += diffDays;
+                    respondedAppsCount++;
+                    respondedAppIds.add(h.appId);
+                }
+            }
+        });
+        const avgResponseDays = respondedAppsCount > 0 ? (totalDays / respondedAppsCount).toFixed(1) : 'N/A';
+        
+        return (
+            <div className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center"><h3 className="text-gray-500 dark:text-gray-400 uppercase text-sm font-bold">Total Applications</h3><p className="text-4xl font-bold mt-2 dark:text-white">{applications.length}</p></div>
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center"><h3 className="text-gray-500 dark:text-gray-400 uppercase text-sm font-bold">Interview Stage</h3><p className="text-4xl font-bold mt-2 dark:text-white">{applications.filter(a => positiveStatuses.has(a.status) && a.status !== 'Applied').length}</p></div>
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center"><h3 className="text-gray-500 dark:text-gray-400 uppercase text-sm font-bold">Offers</h3><p className="text-4xl font-bold mt-2 dark:text-white">{applications.filter(a => a.status === 'Offer').length}</p></div>
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center"><h3 className="text-gray-500 dark:text-gray-400 uppercase text-sm font-bold">Avg. Time to Respond</h3><p className="text-4xl font-bold mt-2 dark:text-white">{avgResponseDays} <span className="text-lg">days</span></p></div>
                 </div>
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md"><h3 className="font-bold mb-4 dark:text-white">Application Timeline (Last 90 Days)</h3>
-                    <ResponsiveContainer width="100%" height={300}>
-                        <LineChart data={timelineData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="name" />
-                            <YAxis />
-                            <Tooltip />
-                            <Legend />
-                            <Line type="monotone" dataKey="count" stroke="#8884d8" name="Applications" />
-                        </LineChart>
-                    </ResponsiveContainer>
+                 <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md"><h3 className="font-bold mb-4 dark:text-white">Application Funnel</h3>{sankeyData.nodes.length > 0 && sankeyData.links.length > 0 ? (<ResponsiveContainer width="100%" height={400}><Sankey data={sankeyData} node={{stroke: '#777', strokeWidth: 1}} nodePadding={50} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}><Tooltip /></Sankey></ResponsiveContainer>) : <p className="text-gray-500 dark:text-gray-400 text-center pt-16">Not enough data for a funnel. Apply to some jobs!</p>}</div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md"><h3 className="font-bold mb-4 dark:text-white">Status Breakdown</h3>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <PieChart>
+                                <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="#8884d8" label>
+                                    {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                                </Pie>
+                                <Tooltip />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </div>
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md"><h3 className="font-bold mb-4 dark:text-white">Application Timeline (Last 90 Days)</h3>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <LineChart data={timelineData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="name" />
+                                <YAxis />
+                                <Tooltip />
+                                <Legend />
+                                <Line type="monotone" dataKey="count" stroke="#8884d8" name="Applications" />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
                 </div>
             </div>
-        </div>
-    );
+        );
+    } catch (error) {
+        console.error("Dashboard rendering error:", error);
+        return <div className="bg-red-100 text-red-700 p-4 rounded-lg">An error occurred while rendering the dashboard. Please check the console for details.</div>
+    }
 };
 
 // ====================================================================================
