@@ -1,5 +1,4 @@
 # job-tracker-app
-Here's the rewritten content with explicit Markdown formatting, designed to retain its structure and appearance on GitHub:
 
 # AI-Powered Job Application Tracker
 
