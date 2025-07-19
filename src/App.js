@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile } from 'firebase/auth';
 import { getFirestore, collection, doc, addDoc, getDoc, setDoc, deleteDoc, onSnapshot, query, serverTimestamp, updateDoc, arrayUnion, arrayRemove, writeBatch } from 'firebase/firestore';
@@ -1075,10 +1075,10 @@ export default function App() {
     };
     
     // --- UI Handlers ---
-    const openModal = useCallback((app = null) => { setEditingApplication(app); setIsModalOpen(true); }, []);
-    const closeModal = useCallback(() => { setIsModalOpen(false); setEditingApplication(null); }, []);
-    const handleSetView = useCallback((viewName, appId = null) => { setSelectedAppId(appId); setView(viewName); setIsSidebarOpen(false); }, []);
-    const handleSignOut = useCallback(() => { signOut(auth).catch(err => setError("Sign out failed: " + err.message)); }, [auth]);
+    const openModal = (app = null) => { setEditingApplication(app); setIsModalOpen(true); };
+    const closeModal = () => { setIsModalOpen(false); setEditingApplication(null); };
+    const handleSetView = (viewName, appId = null) => { setSelectedAppId(appId); setView(viewName); setIsSidebarOpen(false); };
+    const handleSignOut = () => { signOut(auth).catch(err => setError("Sign out failed: " + err.message)); };
 
     if (!isAuthReady) {
         return <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">Loading...</div>;
