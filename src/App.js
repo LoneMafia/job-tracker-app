@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile } from 'firebase/auth';
 import { getFirestore, collection, doc, addDoc, getDoc, setDoc, deleteDoc, onSnapshot, query, serverTimestamp, updateDoc, arrayUnion, arrayRemove, writeBatch } from 'firebase/firestore';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Sankey, PieChart, Pie, Cell, LineChart, Line, Label } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Sankey, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 // PapaParse is now loaded dynamically via a script tag
 
 // --- IMPORTANT: REPLACE THIS with the firebaseConfig object from your own Firebase project settings. ---
@@ -16,6 +16,38 @@ const firebaseConfig = {
   measurementId: "G-44GC43NFEB"
 };
 const appId = 'default-app-id'; // This can remain as is
+
+// ====================================================================================
+// --- FILE: src/components/ErrorBoundary.js ---
+// ====================================================================================
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("Uncaught error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg" role="alert">
+          <h3 className="font-bold">Something went wrong.</h3>
+          <p>A critical error occurred in this part of the application. Please try refreshing the page or contacting support.</p>
+          <pre className="mt-2 text-xs whitespace-pre-wrap">{this.state.error?.toString()}</pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 
 // ====================================================================================
 // --- FILE: src/components/Icons.js ---
@@ -1075,10 +1107,10 @@ export default function App() {
     };
     
     // --- UI Handlers ---
-    const openModal = (app = null) => { setEditingApplication(app); setIsModalOpen(true); };
-    const closeModal = () => { setIsModalOpen(false); setEditingApplication(null); };
-    const handleSetView = (viewName, appId = null) => { setSelectedAppId(appId); setView(viewName); setIsSidebarOpen(false); };
-    const handleSignOut = () => { signOut(auth).catch(err => setError("Sign out failed: " + err.message)); };
+    const openModal = useCallback((app = null) => { setEditingApplication(app); setIsModalOpen(true); }, []);
+    const closeModal = useCallback(() => { setIsModalOpen(false); setEditingApplication(null); }, []);
+    const handleSetView = useCallback((viewName, appId = null) => { setSelectedAppId(appId); setView(viewName); setIsSidebarOpen(false); }, []);
+    const handleSignOut = useCallback(() => { signOut(auth).catch(err => setError("Sign out failed: " + err.message)); }, [auth]);
 
     if (!isAuthReady) {
         return <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">Loading...</div>;
@@ -1135,7 +1167,9 @@ export default function App() {
                             <p className="text-sm text-gray-500 dark:text-gray-400">{greeting}</p>
                         </div>
                         {error && <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-md" role="alert"><p>{error}</p></div>}
-                        <MainContent />
+                        <ErrorBoundary>
+                            <MainContent />
+                        </ErrorBoundary>
                     </div>
                 </main>
             </div>
